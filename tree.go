@@ -2,7 +2,6 @@ package classification
 
 import (
 	"fmt"
-	"github.com/gonum/matrix/mat64"
 	"math"
 	"sort"
 	"strings"
@@ -173,7 +172,7 @@ type TreeBuilder struct {
 	XValLoss   LossFunction
 }
 
-func (b *TreeBuilder) NewTree(x *mat64.Dense, k Classes, response []int, alpha float64) *Tree {
+func (b *TreeBuilder) NewTree(x *Matrix, k Classes, response []int, alpha float64) *Tree {
 	rows := make([]int, len(response))
 	for i := range rows {
 		rows[i] = i
@@ -181,7 +180,7 @@ func (b *TreeBuilder) NewTree(x *mat64.Dense, k Classes, response []int, alpha f
 	return b.NewTrees(x, k, response, rows, []float64{alpha})[0]
 }
 
-func (b *TreeBuilder) NewTrees(x *mat64.Dense, k Classes, response []int,
+func (b *TreeBuilder) NewTrees(x *Matrix, k Classes, response []int,
 	rows []int, alpha []float64) []*Tree {
 
 	// build the initial tree
@@ -265,7 +264,7 @@ func (b *TreeBuilder) NewTrees(x *mat64.Dense, k Classes, response []int,
 
 type xBuilder struct {
 	TreeBuilder
-	x        *mat64.Dense
+	x        *Matrix
 	k        Classes
 	response []int
 }
@@ -288,9 +287,7 @@ func (b *xBuilder) build(rows []int) *Tree {
 	var bestSplit int
 	var bestLimit float64
 	var bestScore float64
-
-	_, nCol := b.x.Dims()
-	for col := 0; col < nCol; col++ {
+	for col := 0; col < b.x.p; col++ {
 		sort.Sort(colSort{b.x, rows, col})
 		sortedResp := make([]int, len(rows))
 		for i, row := range rows {
@@ -329,7 +326,7 @@ func (b *xBuilder) build(rows []int) *Tree {
 }
 
 type colSort struct {
-	x    mat64.Matrix
+	x    *Matrix
 	rows []int
 	col  int
 }

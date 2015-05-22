@@ -4,7 +4,6 @@ package main
 
 import (
 	"flag"
-	"github.com/gonum/matrix/mat64"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/mt19937"
 	"log"
@@ -43,7 +42,7 @@ func main() {
 			raw[i*p+j] = rng.NormFloat64() + means[response[i]]
 		}
 	}
-	x := mat64.NewDense(n, p, raw)
+	x := classification.NewMatrix(n, p, raw)
 	// classification.WriteMatrix("data", x)
 	// classification.WriteVector("resp", response)
 

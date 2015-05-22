@@ -2,13 +2,12 @@ package classification
 
 import (
 	"fmt"
-	"github.com/gonum/matrix/mat64"
 	"math"
 )
 
 // NewXVTree constructs a new classification tree using K-fold
 // crossvalidation to find the optimal pruning parameter alpha.
-func (b *TreeBuilder) NewXVTree(x *mat64.Dense, classes Classes, response []int, K int) *Tree {
+func (b *TreeBuilder) NewXVTree(x *Matrix, classes Classes, response []int, K int) *Tree {
 	n := len(response)
 	learnSize := n * (K - 1) / K
 
@@ -39,7 +38,7 @@ func (b *TreeBuilder) NewXVTree(x *mat64.Dense, classes Classes, response []int,
 				cumLoss = loss
 			} else {
 				for _, row := range testRows {
-					prob := tree.Lookup(x.Row(nil, row))
+					prob := tree.Lookup(x.Row(row))
 					val := b.XValLoss(response[row], prob)
 					cumLoss[0] += val
 					cumLoss[1] += val * val
