@@ -275,9 +275,11 @@ func (b *xBuilder) build(rows []int) *Tree {
 	for i, row := range rows {
 		y[i] = b.response[row]
 	}
+	total := b.k.Frequencies(y)
+
 	if b.StopGrowth(y) {
 		return &Tree{
-			counts: b.k.Frequencies(y),
+			counts: total,
 		}
 	}
 
@@ -295,10 +297,16 @@ func (b *xBuilder) build(rows []int) *Tree {
 			sortedResp[i] = b.response[row]
 		}
 
+		leftFreq := make([]int, len(total))
+		rightFreq := make([]int, len(total))
+		copy(rightFreq, total)
 		for i := 1; i < len(rows); i++ {
 			limit := (b.x.At(rows[i-1], col) + b.x.At(rows[i], col)) / 2
-			leftScore := b.SplitScore(b.k.Frequencies(sortedResp[:i]))
-			rightScore := b.SplitScore(b.k.Frequencies(sortedResp[i:]))
+			yi := sortedResp[i-1]
+			leftFreq[yi]++  // this gives b.k.Frequencies(sortedResp[:i])
+			rightFreq[yi]-- // this gives b.k.Frequencies(sortedResp[i:])
+			leftScore := b.SplitScore(leftFreq)
+			rightScore := b.SplitScore(rightFreq)
 			p := float64(i) / float64(len(rows))
 			score := leftScore*p + rightScore*(1-p)
 			if first || score < bestScore {
