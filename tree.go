@@ -3,6 +3,7 @@ package classification
 import (
 	"fmt"
 	"github.com/gonum/matrix/mat64"
+	"math"
 	"sort"
 	"strings"
 )
@@ -62,15 +63,12 @@ func (t *Tree) Lookup(x []float64) []float64 {
 	}
 }
 
-func (t *Tree) costComplexityScore(score ScoreFunction, alpha float64) float64 {
-	var res float64
-	leaves := 0
+func (t *Tree) costComplexityScore(score ScoreFunction) (loss float64, leaves int) {
 	t.foreachLeaf(func(t *Tree, _ int) {
 		leaves++
-		res += float64(sum(t.counts)) * score(t.counts)
+		loss += float64(sum(t.counts)) * score(t.counts)
 	}, 0)
-	res += alpha * float64(leaves)
-	return res
+	return
 }
 
 func (t *Tree) walkPostOrder(fn func(*Tree, int), depth int) {
@@ -162,22 +160,31 @@ func (ctx *pruneCtx) prunedTree(tree *Tree) *Tree {
 	return res
 }
 
-type ScoreFunction func([]int) float64
-
-type StopFunction func([]int) bool
+type (
+	ScoreFunction func([]int) float64
+	StopFunction  func([]int) bool
+	LossFunction  func(int, []float64) float64
+)
 
 type TreeBuilder struct {
 	StopGrowth StopFunction
 	SplitScore ScoreFunction
 	PruneScore ScoreFunction
+	XValLoss   LossFunction
 }
 
 func (b *TreeBuilder) NewTree(x *mat64.Dense, k Classes, response []int, alpha float64) *Tree {
-	// build the initial tree
 	rows := make([]int, len(response))
 	for i := range rows {
 		rows[i] = i
 	}
+	return b.NewTrees(x, k, response, rows, []float64{alpha})[0]
+}
+
+func (b *TreeBuilder) NewTrees(x *mat64.Dense, k Classes, response []int,
+	rows []int, alpha []float64) []*Tree {
+
+	// build the initial tree
 	xb := &xBuilder{*b, x, k, response}
 	tree := xb.build(rows)
 
@@ -198,14 +205,58 @@ func (b *TreeBuilder) NewTree(x *mat64.Dense, k Classes, response []int, alpha f
 		tree = ctx.prunedTree(tree)
 	}
 
+	// get expected loss and complexity
+	// TODO(voss): ctx.search, above, already computes the expected
+	// loss; reuse these values rather than computing them again.
+	m := len(candidates)
+	loss := make([]float64, m)
+	complexity := make([]int, m)
+	for i, tree := range candidates {
+		loss[i], complexity[i] = tree.costComplexityScore(b.PruneScore)
+	}
+
+	// Loss is increasing, complexity is decreasing.  We are looking
+	// for the i which minimises loss[i] + alpha*complexity[i].
+	// We find:
+	//
+	//   i is favoured over i+1
+	//     <=> loss[i] + alpha*complexity[i] < loss[i+1] + alpha*complexity[i+1]
+	//     <=> alpha*(complexity[i]-complexity[i+1]) < loss[i+1]-loss[i]
+	//     <=> alpha < (loss[i+1]-loss[i]) / (complexity[i]-complexity[i+1])
+	if alpha[0] < 0 {
+		var alphaMin float64
+		i := 0
+		for alphaMin < 1e-6 {
+			alphaMin = 0.8 * (loss[i+1] - loss[i]) /
+				float64(complexity[i]-complexity[i+1])
+			i++
+		}
+		alphaMax := 1.2 * (loss[m-1] - loss[m-2]) /
+			float64(complexity[m-2]-complexity[m-1])
+		alphaSteps := len(alpha)
+		step := math.Pow(alphaMax/alphaMin, 1/float64(alphaSteps-1))
+		a := alphaMin
+		for i := range alpha {
+			alpha[i] = a
+			a *= step
+		}
+	}
+
 	// get the "optimal" pruned tree
-	bestTree := candidates[0]
-	bestScore := bestTree.costComplexityScore(b.PruneScore, alpha)
-	for _, tree := range candidates[1:] {
-		score := tree.costComplexityScore(b.PruneScore, alpha)
-		if score < bestScore {
-			bestTree = tree
-			bestScore = score
+	bestScore := make([]float64, len(alpha))
+	for i := range bestScore {
+		bestScore[i] = math.Inf(1)
+	}
+	bestTree := make([]*Tree, len(alpha))
+	bestIdx := make([]int, len(alpha))
+	for i, a := range alpha {
+		for j, tree := range candidates {
+			score := loss[j] + a*float64(complexity[j])
+			if score < bestScore[i] {
+				bestScore[i] = score
+				bestTree[i] = tree
+				bestIdx[i] = j
+			}
 		}
 	}
 

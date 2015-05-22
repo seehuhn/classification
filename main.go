@@ -3,22 +3,37 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"github.com/gonum/matrix/mat64"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/mt19937"
+	"log"
 	"math/rand"
+	"os"
+	"runtime/pprof"
 )
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	rng := rand.New(mt19937.New())
 	rng.Seed(12)
 
-	means := []float64{-1.0, 1.0}
+	means := []float64{-1, 1}
 
 	k := classification.Classes(2)
 
-	n := 10000
+	n := 15000
 	p := 2
 	raw := make([]float64, n*p)
 	response := make([]int, n)
@@ -29,6 +44,8 @@ func main() {
 		}
 	}
 	x := mat64.NewDense(n, p, raw)
+	// classification.WriteMatrix("data", x)
+	// classification.WriteVector("resp", response)
 
 	b := &classification.TreeBuilder{
 		StopGrowth: func(y []int) bool {
@@ -44,8 +61,12 @@ func main() {
 		},
 		SplitScore: classification.Entropy,
 		PruneScore: classification.MisclassificationError,
+		XValLoss:   classification.OtherLoss,
 	}
 
+	b.NewXVTree(x, k, response, 10)
+
 	tree := b.NewTree(x, k, response, 3.0)
-	fmt.Println(tree.Format())
+	// fmt.Println(tree.Format())
+	_ = tree
 }
