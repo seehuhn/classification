@@ -1,35 +1,32 @@
 package classification
 
-import (
-	"fmt"
-	"math"
-)
+// NewTree constructs a new classification tree.
+//
+// K-fold crossvalidation is used to find the optimal pruning
+// parameter.
+func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, float64) {
 
-// NewXVTree constructs a new classification tree using K-fold
-// crossvalidation to find the optimal pruning parameter alpha.
-func (b *TreeBuilder) NewXVTree(x *Matrix, classes Classes, response []int, K int) *Tree {
 	n := len(response)
-	learnSize := n * (K - 1) / K
+	learnSize := n * (b.K - 1) / b.K
 
 	alphaSteps := 50
 	alpha := make([]float64, alphaSteps)
-	alpha[0] = -1 // ask NewTree to get the range of alpha
+	alpha[0] = -1 // ask tryTrees to determine the range of alpha
 
 	mean := make([]float64, len(alpha))
-	squares := make([]float64, len(alpha))
 
-	for k := 0; k < K; k++ {
+	for k := 0; k < b.K; k++ {
 		learnRows := make([]int, 0, learnSize+1)
 		testRows := make([]int, 0, n-learnSize)
 		for i := range response {
-			if i%K == k {
+			if i%b.K == k {
 				testRows = append(testRows, i)
 			} else {
 				learnRows = append(learnRows, i)
 			}
 		}
 
-		trees := b.NewTrees(x, classes, response, learnRows, alpha)
+		trees := b.tryTrees(x, classes, response, learnRows, alpha)
 
 		cache := make(map[*Tree][2]float64)
 		for l, tree := range trees {
@@ -46,19 +43,26 @@ func (b *TreeBuilder) NewXVTree(x *Matrix, classes Classes, response []int, K in
 				cache[tree] = cumLoss
 			}
 			mean[l] += cumLoss[0]
-			squares[l] += cumLoss[1]
 		}
 	}
 	for l := range alpha {
 		mean[l] /= float64(n)
-		squares[l] /= float64(n)
 	}
 
+	var bestAlpha float64
+	var bestExpectedLoss float64
 	for l, a := range alpha {
-		m := mean[l]
-		sd := math.Sqrt(squares[l] - m*m)
-		fmt.Printf("%f %f %f\n", a, m, sd/math.Sqrt(float64(n)))
+		if l == 0 || mean[l] < bestExpectedLoss {
+			bestAlpha = a
+			bestExpectedLoss = mean[l]
+		}
 	}
 
-	return nil
+	rows := make([]int, len(response))
+	for i := range rows {
+		rows[i] = i
+	}
+	tree := b.tryTrees(x, classes, response, rows, []float64{bestAlpha})[0]
+
+	return tree, bestExpectedLoss
 }

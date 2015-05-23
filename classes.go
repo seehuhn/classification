@@ -1,15 +1,5 @@
 package classification
 
-type Classes int
-
-func (k Classes) Frequencies(y []int) []int {
-	freq := make([]int, int(k))
-	for _, yi := range y {
-		freq[yi]++
-	}
-	return freq
-}
-
 func probabilities(freq []int) []float64 {
 	prob := make([]float64, len(freq))
 	n := sum(freq)

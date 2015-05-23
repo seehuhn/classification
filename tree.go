@@ -2,6 +2,8 @@ package classification
 
 import (
 	"fmt"
+	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/loss"
 	"math"
 	"sort"
 	"strings"
@@ -32,6 +34,10 @@ func (t *Tree) doFormat(indent int) []string {
 	return res
 }
 
+func (t *Tree) Format() string {
+	return strings.Join(t.doFormat(0), "\n")
+}
+
 func (t *Tree) String() string {
 	nodes := 0
 	maxDepth := 0
@@ -43,10 +49,6 @@ func (t *Tree) String() string {
 	}, 0)
 	return fmt.Sprintf("<classification tree, %d leaves, max depth %d>",
 		nodes, maxDepth)
-}
-
-func (t *Tree) Format() string {
-	return strings.Join(t.doFormat(0), "\n")
 }
 
 func (t *Tree) Lookup(x []float64) []float64 {
@@ -62,7 +64,7 @@ func (t *Tree) Lookup(x []float64) []float64 {
 	}
 }
 
-func (t *Tree) costComplexityScore(score ScoreFunction) (loss float64, leaves int) {
+func (t *Tree) costComplexityScore(score impurity.Function) (loss float64, leaves int) {
 	t.foreachLeaf(func(t *Tree, _ int) {
 		leaves++
 		loss += float64(sum(t.counts)) * score(t.counts)
@@ -88,7 +90,7 @@ func (t *Tree) foreachLeaf(fn func(*Tree, int), depth int) {
 }
 
 type pruneCtx struct {
-	pruneScore ScoreFunction
+	pruneScore impurity.Function
 
 	valid         bool
 	lowestPenalty float64
@@ -159,32 +161,22 @@ func (ctx *pruneCtx) prunedTree(tree *Tree) *Tree {
 	return res
 }
 
-type (
-	ScoreFunction func([]int) float64
-	StopFunction  func([]int) bool
-	LossFunction  func(int, []float64) float64
-)
+type StopFunction func([]int) bool
 
 type TreeBuilder struct {
+	XValLoss loss.Function
+	K        int
+
 	StopGrowth StopFunction
-	SplitScore ScoreFunction
-	PruneScore ScoreFunction
-	XValLoss   LossFunction
+	SplitScore impurity.Function
+	PruneScore impurity.Function
 }
 
-func (b *TreeBuilder) NewTree(x *Matrix, k Classes, response []int, alpha float64) *Tree {
-	rows := make([]int, len(response))
-	for i := range rows {
-		rows[i] = i
-	}
-	return b.NewTrees(x, k, response, rows, []float64{alpha})[0]
-}
-
-func (b *TreeBuilder) NewTrees(x *Matrix, k Classes, response []int,
+func (b *TreeBuilder) tryTrees(x *Matrix, classes int, response []int,
 	rows []int, alpha []float64) []*Tree {
 
 	// build the initial tree
-	xb := &xBuilder{*b, x, k, response}
+	xb := &xBuilder{*b, x, classes, response}
 	tree := xb.build(rows)
 
 	// get all candidates for pruning the tree
@@ -196,17 +188,17 @@ func (b *TreeBuilder) NewTrees(x *Matrix, k Classes, response []int,
 			break
 		}
 
-		childCount := make([]int, int(k))
 		ctx := &pruneCtx{
 			pruneScore: b.PruneScore,
 		}
+		childCount := make([]int, classes)
 		ctx.search(tree, nil, childCount)
 		tree = ctx.prunedTree(tree)
 	}
 
 	// get expected loss and complexity
 	// TODO(voss): ctx.search, above, already computes the expected
-	// loss; reuse these values rather than computing them again.
+	// loss; reuse these values rather than computing them again?
 	m := len(candidates)
 	loss := make([]float64, m)
 	complexity := make([]int, m)
@@ -265,16 +257,18 @@ func (b *TreeBuilder) NewTrees(x *Matrix, k Classes, response []int,
 type xBuilder struct {
 	TreeBuilder
 	x        *Matrix
-	k        Classes
+	classes  int
 	response []int
 }
 
 func (b *xBuilder) build(rows []int) *Tree {
 	y := make([]int, len(rows))
+	total := make([]int, b.classes)
 	for i, row := range rows {
-		y[i] = b.response[row]
+		yi := b.response[row]
+		y[i] = yi
+		total[yi]++
 	}
-	total := b.k.Frequencies(y)
 
 	if b.StopGrowth(y) {
 		return &Tree{
@@ -288,7 +282,7 @@ func (b *xBuilder) build(rows []int) *Tree {
 	var bestLimit float64
 	var bestScore float64
 	for col := 0; col < b.x.p; col++ {
-		sort.Sort(colSort{b.x, rows, col})
+		sort.Sort(&colSort{b.x, rows, col})
 		sortedResp := make([]int, len(rows))
 		for i, row := range rows {
 			sortedResp[i] = b.response[row]
@@ -300,8 +294,8 @@ func (b *xBuilder) build(rows []int) *Tree {
 		for i := 1; i < len(rows); i++ {
 			limit := (b.x.At(rows[i-1], col) + b.x.At(rows[i], col)) / 2
 			yi := sortedResp[i-1]
-			leftFreq[yi]++  // this gives b.k.Frequencies(sortedResp[:i])
-			rightFreq[yi]-- // this gives b.k.Frequencies(sortedResp[i:])
+			leftFreq[yi]++  // this gives Frequencies(sortedResp[:i])
+			rightFreq[yi]-- // this gives Frequencies(sortedResp[i:])
 			leftScore := b.SplitScore(leftFreq)
 			rightScore := b.SplitScore(rightFreq)
 			p := float64(i) / float64(len(rows))
@@ -316,7 +310,7 @@ func (b *xBuilder) build(rows []int) *Tree {
 		}
 	}
 
-	sort.Sort(colSort{b.x, rows, bestCol})
+	sort.Sort(&colSort{b.x, rows, bestCol})
 	return &Tree{
 		leftChild:  b.build(rows[:bestSplit]),
 		rightChild: b.build(rows[bestSplit:]),
@@ -331,10 +325,10 @@ type colSort struct {
 	col  int
 }
 
-func (c colSort) Len() int { return len(c.rows) }
-func (c colSort) Less(i, j int) bool {
+func (c *colSort) Len() int { return len(c.rows) }
+func (c *colSort) Less(i, j int) bool {
 	return c.x.At(c.rows[i], c.col) < c.x.At(c.rows[j], c.col)
 }
-func (c colSort) Swap(i, j int) {
+func (c *colSort) Swap(i, j int) {
 	c.rows[i], c.rows[j] = c.rows[j], c.rows[i]
 }
