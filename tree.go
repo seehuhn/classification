@@ -1,3 +1,19 @@
+// tree.go -
+// Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package classification
 
 import (
@@ -13,7 +29,7 @@ type Tree struct {
 	// fields used for internal nodes
 	leftChild  *Tree
 	rightChild *Tree
-	col        int
+	column     int
 	limit      float64
 
 	// fields used for leaf nodes
@@ -23,13 +39,14 @@ type Tree struct {
 func (t *Tree) doFormat(indent int) []string {
 	pfx := strings.Repeat("  ", indent)
 	res := []string{}
+	if t.counts != nil {
+		res = append(res, pfx+fmt.Sprintf("%v", t.counts))
+	}
 	if t.leftChild != nil {
-		res = append(res, pfx+fmt.Sprintf("if x[%d] <= %g:", t.col, t.limit))
+		res = append(res, pfx+fmt.Sprintf("if x[%d] <= %g:", t.column, t.limit))
 		res = append(res, t.leftChild.doFormat(indent+1)...)
 		res = append(res, pfx+"else:")
 		res = append(res, t.rightChild.doFormat(indent+1)...)
-	} else {
-		res = append(res, pfx+fmt.Sprintf("%v", t.counts))
 	}
 	return res
 }
@@ -56,7 +73,7 @@ func (t *Tree) Lookup(x []float64) []float64 {
 		if t.leftChild == nil {
 			return probabilities(t.counts)
 		}
-		if x[t.col] <= t.limit {
+		if x[t.column] <= t.limit {
 			t = t.leftChild
 		} else {
 			t = t.rightChild
@@ -146,14 +163,14 @@ func (ctx *pruneCtx) prunedTree(tree *Tree) *Tree {
 			res = &Tree{
 				leftChild:  res,
 				rightChild: spine[i].rightChild,
-				col:        spine[i].col,
+				column:     spine[i].column,
 				limit:      spine[i].limit,
 			}
 		} else {
 			res = &Tree{
 				leftChild:  spine[i].leftChild,
 				rightChild: res,
-				col:        spine[i].col,
+				column:     spine[i].column,
 				limit:      spine[i].limit,
 			}
 		}
@@ -314,7 +331,7 @@ func (b *xBuilder) build(rows []int) *Tree {
 	return &Tree{
 		leftChild:  b.build(rows[:bestSplit]),
 		rightChild: b.build(rows[bestSplit:]),
-		col:        bestCol,
+		column:     bestCol,
 		limit:      bestLimit,
 	}
 }
