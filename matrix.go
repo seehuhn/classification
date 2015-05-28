@@ -29,6 +29,8 @@ type Matrix struct {
 func NewMatrix(n, p int, data []float64) *Matrix {
 	if data == nil {
 		data = make([]float64, n*p)
+	} else if len(data) < n*p {
+		panic("not enough data provided")
 	}
 	return &Matrix{
 		n:    n,

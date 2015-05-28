@@ -74,10 +74,7 @@ func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, fl
 		}
 	}
 
-	rows := make([]int, len(response))
-	for i := range rows {
-		rows[i] = i
-	}
+	rows := intRange(len(response))
 	tree := b.tryTrees(x, classes, response, rows, []float64{bestAlpha})[0]
 
 	return tree, bestExpectedLoss
