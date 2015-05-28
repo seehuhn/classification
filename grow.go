@@ -15,11 +15,122 @@ type TreeBuilder struct {
 	PruneScore impurity.Function
 }
 
+var DefaultTreeBuilder = &TreeBuilder{
+	XValLoss: loss.ZeroOne,
+	K:        5,
+	StopGrowth: func(y []int) bool {
+		return len(y) <= 1
+	},
+	SplitScore: impurity.Gini,
+	PruneScore: impurity.MisclassificationError,
+}
+
+func (b *TreeBuilder) setDefaults() {
+	if b.XValLoss == nil {
+		b.XValLoss = DefaultTreeBuilder.XValLoss
+	}
+	if b.K <= 0 {
+		b.K = DefaultTreeBuilder.K
+	}
+	if b.StopGrowth == nil {
+		b.StopGrowth = DefaultTreeBuilder.StopGrowth
+	}
+	if b.SplitScore == nil {
+		b.SplitScore = DefaultTreeBuilder.SplitScore
+	}
+	if b.PruneScore == nil {
+		b.PruneScore = DefaultTreeBuilder.PruneScore
+	}
+}
+
+// NewTree constructs a new classification tree.
+//
+// K-fold crossvalidation is used to find the optimal pruning
+// parameter.
+//
+// The return values are the new tree and an estimate for the average
+// value of the loss function (given by `b.XValLoss`).
+func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, float64) {
+	b.setDefaults()
+
+	n := len(response)
+
+	alphaSteps := 50
+	alpha := make([]float64, alphaSteps)
+	alpha[0] = -1 // ask tryTrees to determine the range of alpha
+
+	mean := make([]float64, len(alpha))
+
+	for k := 0; k < b.K; k++ {
+		learnRows, testRows := getXValSets(k, b.K, n)
+
+		trees := b.tryTrees(x, classes, response, learnRows, alpha)
+
+		cache := make(map[*Tree]float64)
+		for l, tree := range trees {
+			var cumLoss float64
+			if loss, ok := cache[tree]; ok {
+				cumLoss = loss
+			} else {
+				for _, row := range testRows {
+					prob := tree.Lookup(x.Row(row))
+					val := b.XValLoss(response[row], prob)
+					cumLoss += val
+				}
+				cache[tree] = cumLoss
+			}
+			mean[l] += cumLoss
+		}
+	}
+	for l := range alpha {
+		mean[l] /= float64(n)
+	}
+
+	var bestAlpha float64
+	var bestExpectedLoss float64
+	for l, a := range alpha {
+		if l == 0 || mean[l] < bestExpectedLoss {
+			bestAlpha = a
+			bestExpectedLoss = mean[l]
+		}
+	}
+
+	rows := intRange(len(response))
+	tree := b.tryTrees(x, classes, response, rows, []float64{bestAlpha})[0]
+
+	return tree, bestExpectedLoss
+}
+
 type xBuilder struct {
 	TreeBuilder
 	x        *Matrix
 	classes  int
 	response []int
+}
+
+func (b *xBuilder) build(rows []int) *Tree {
+	y := make([]int, len(rows))
+	hist := make([]int, b.classes)
+	for i, row := range rows {
+		yi := b.response[row]
+		y[i] = yi
+		hist[yi]++
+	}
+
+	if b.StopGrowth(y) {
+		return &Tree{
+			counts: hist,
+		}
+	}
+
+	best := b.findBestSplit(rows, hist)
+
+	return &Tree{
+		leftChild:  b.build(best.Left),
+		rightChild: b.build(best.Right),
+		column:     best.Col,
+		limit:      best.Limit,
+	}
 }
 
 type searchResult struct {
@@ -57,31 +168,6 @@ func (b *xBuilder) findBestSplit(rows []int, hist []int) *searchResult {
 		}
 	}
 	return best
-}
-
-func (b *xBuilder) build(rows []int) *Tree {
-	y := make([]int, len(rows))
-	hist := make([]int, b.classes)
-	for i, row := range rows {
-		yi := b.response[row]
-		y[i] = yi
-		hist[yi]++
-	}
-
-	if b.StopGrowth(y) {
-		return &Tree{
-			counts: hist,
-		}
-	}
-
-	best := b.findBestSplit(rows, hist)
-
-	return &Tree{
-		leftChild:  b.build(best.Left),
-		rightChild: b.build(best.Right),
-		column:     best.Col,
-		limit:      best.Limit,
-	}
 }
 
 type colSort struct {

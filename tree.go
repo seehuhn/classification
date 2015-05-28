@@ -21,8 +21,13 @@ import (
 	"strings"
 )
 
+// StopFunction is the type of function used to decide when to grow
+// branches of a classification tree when the tree is originally
+// constructed (i.e. before pruning).  The default stop function keeps
+// adding branches until only one node is left.
 type StopFunction func([]int) bool
 
+// Tree is the (opaque) data type to represent a classification tree.
 type Tree struct {
 	// fields used for internal nodes
 	leftChild  *Tree
@@ -98,53 +103,10 @@ func (t *Tree) foreachLeaf(fn func(*Tree, int), depth int) {
 
 // NewTree constructs a new classification tree.
 //
-// K-fold crossvalidation is used to find the optimal pruning
-// parameter.
-func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, float64) {
-	n := len(response)
-
-	alphaSteps := 50
-	alpha := make([]float64, alphaSteps)
-	alpha[0] = -1 // ask tryTrees to determine the range of alpha
-
-	mean := make([]float64, len(alpha))
-
-	for k := 0; k < b.K; k++ {
-		learnRows, testRows := getXValSets(k, b.K, n)
-
-		trees := b.tryTrees(x, classes, response, learnRows, alpha)
-
-		cache := make(map[*Tree]float64)
-		for l, tree := range trees {
-			var cumLoss float64
-			if loss, ok := cache[tree]; ok {
-				cumLoss = loss
-			} else {
-				for _, row := range testRows {
-					prob := tree.Lookup(x.Row(row))
-					val := b.XValLoss(response[row], prob)
-					cumLoss += val
-				}
-				cache[tree] = cumLoss
-			}
-			mean[l] += cumLoss
-		}
-	}
-	for l := range alpha {
-		mean[l] /= float64(n)
-	}
-
-	var bestAlpha float64
-	var bestExpectedLoss float64
-	for l, a := range alpha {
-		if l == 0 || mean[l] < bestExpectedLoss {
-			bestAlpha = a
-			bestExpectedLoss = mean[l]
-		}
-	}
-
-	rows := intRange(len(response))
-	tree := b.tryTrees(x, classes, response, rows, []float64{bestAlpha})[0]
-
-	return tree, bestExpectedLoss
+// This function uses the `DefaultTreeBuilder` to construct a new
+// classification tree.  The return values are the new tree and an
+// estimate for the average value of the loss function (given by
+// `DefaultTreeBuilder.XValLoss`).
+func NewTree(x *Matrix, classes int, response []int) (*Tree, float64) {
+	return DefaultTreeBuilder.NewTree(x, classes, response)
 }
