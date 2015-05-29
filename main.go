@@ -24,6 +24,7 @@ import (
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
+	"github.com/seehuhn/classification/util"
 	"github.com/seehuhn/mt19937"
 	"log"
 	"math/rand"
@@ -66,16 +67,19 @@ func main() {
 		XValLoss: loss.Other,
 		K:        5,
 
-		StopGrowth: func(y []int) bool {
-			if len(y) <= 5 {
-				return true
-			}
-			for i := 1; i < len(y); i++ {
-				if y[i] != y[i-1] {
-					return false
+		StopGrowth: func(hist util.Histogram) bool {
+			seen := 0
+			sum := 0
+			for _, ni := range hist {
+				sum += ni
+				if ni > 0 {
+					seen++
 				}
 			}
-			return true
+			if sum <= 5 {
+				return true
+			}
+			return seen < 2
 		},
 		SplitScore: impurity.Entropy,
 		PruneScore: impurity.MisclassificationError,

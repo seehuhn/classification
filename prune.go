@@ -5,22 +5,7 @@ import (
 	"math"
 )
 
-func (t *Tree) costComplexityScore(score impurity.Function) (loss float64, leaves int) {
-	t.foreachLeaf(func(t *Tree, _ int) {
-		leaves++
-		loss += float64(sum(t.counts)) * score(t.counts)
-	}, 0)
-	return
-}
-
-func (b *TreeBuilder) tryTrees(x *Matrix, classes int, response []int,
-	rows []int, alpha []float64) []*Tree {
-
-	// build the initial tree
-	xb := &xBuilder{*b, x, classes, response}
-	tree := xb.build(rows)
-
-	// get all candidates for pruning the tree
+func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 	candidates := []*Tree{}
 	for {
 		candidates = append(candidates, tree)
@@ -30,12 +15,25 @@ func (b *TreeBuilder) tryTrees(x *Matrix, classes int, response []int,
 		}
 
 		ctx := &pruneCtx{
-			pruneScore: b.PruneScore,
+			lowestPenalty: math.Inf(1),
+			pruneScore:    b.PruneScore,
 		}
-		childCount := make([]int, classes)
-		ctx.search(tree, nil, childCount)
+		ctx.search(tree, nil)
 		tree = ctx.prunedTree(tree)
 	}
+	return candidates
+}
+
+func (t *Tree) costComplexityScore(score impurity.Function) (loss float64, leaves int) {
+	t.foreachLeaf(func(t *Tree, _ int) {
+		leaves++
+		loss += score(t.counts)
+	}, 0)
+	return
+}
+
+// func (b *TreeBuilder) tryTrees(x *Matrix, classes int, response []int, rows []int, alpha []float64) []*Tree {
+func (b *TreeBuilder) tryTrees(candidates []*Tree, alpha []float64) []*Tree {
 
 	// get expected loss and complexity
 	// TODO(voss): ctx.search, above, already computes the expected
@@ -95,50 +93,50 @@ func (b *TreeBuilder) tryTrees(x *Matrix, classes int, response []int,
 	return bestTree
 }
 
+type direction uint8
+
+const (
+	left direction = iota
+	right
+)
+
 type pruneCtx struct {
 	pruneScore impurity.Function
 
-	valid         bool
 	lowestPenalty float64
-	bestPath      []bool
+	bestPath      []direction
 	bestCounts    []int
 }
 
-func (ctx *pruneCtx) search(t *Tree, path []bool, childCount []int) float64 {
+// returns the total score of the full subtree
+func (ctx *pruneCtx) search(t *Tree, path []direction) float64 {
+	collapsedScore := ctx.pruneScore(t.counts)
 	if t.leftChild == nil {
-		for i, ni := range t.counts {
-			childCount[i] += ni
-		}
-		return float64(sum(t.counts)) * ctx.pruneScore(t.counts)
+		return collapsedScore
 	}
 
-	var res float64
-	childSubCount := make([]int, len(childCount))
-	res += ctx.search(t.leftChild, append(path, true), childSubCount)
-	res += ctx.search(t.rightChild, append(path, false), childSubCount)
-	for i, ni := range childSubCount {
-		childCount[i] += ni
-	}
+	leftFullScore := ctx.search(t.leftChild, append(path, left))
+	rightFullScore := ctx.search(t.rightChild, append(path, right))
+	fullScore := leftFullScore + rightFullScore
 
-	local := float64(sum(childSubCount)) * ctx.pruneScore(childSubCount)
-	penalty := local - res
-	if !ctx.valid || penalty < ctx.lowestPenalty {
-		ctx.valid = true
+	penalty := collapsedScore - fullScore
+	if penalty < ctx.lowestPenalty {
 		ctx.lowestPenalty = penalty
-		ctx.bestPath = make([]bool, len(path))
+		ctx.bestPath = make([]direction, len(path))
 		copy(ctx.bestPath, path)
-		ctx.bestCounts = childSubCount
+		ctx.bestCounts = t.counts
 	}
-	return res
+
+	return fullScore
 }
 
 func (ctx *pruneCtx) prunedTree(tree *Tree) *Tree {
 	n := len(ctx.bestPath)
 	spine := make([]*Tree, n)
 	t := tree
-	for i, left := range ctx.bestPath {
+	for i, dir := range ctx.bestPath {
 		spine[i] = t
-		if left {
+		if dir == left {
 			t = t.leftChild
 		} else {
 			t = t.rightChild
@@ -148,12 +146,13 @@ func (ctx *pruneCtx) prunedTree(tree *Tree) *Tree {
 		counts: ctx.bestCounts,
 	}
 	for i := n - 1; i >= 0; i-- {
-		if ctx.bestPath[i] {
+		if ctx.bestPath[i] == left {
 			res = &Tree{
 				leftChild:  res,
 				rightChild: spine[i].rightChild,
 				column:     spine[i].column,
 				limit:      spine[i].limit,
+				counts:     spine[i].counts,
 			}
 		} else {
 			res = &Tree{
@@ -161,6 +160,7 @@ func (ctx *pruneCtx) prunedTree(tree *Tree) *Tree {
 				rightChild: res,
 				column:     spine[i].column,
 				limit:      spine[i].limit,
+				counts:     spine[i].counts,
 			}
 		}
 	}

@@ -17,49 +17,53 @@
 package impurity
 
 import (
+	"github.com/seehuhn/classification/util"
 	"math"
 )
 
-type Function func([]int) float64
+// Function is the type of functions used to compute impurity measures
+// for a set of classification results.  The argument of a Function is
+// a histogram, giving the counts for the different classes.  The
+// output should be 0, if only one value is represented in the
+// histogram, and positive otherwise.
+//
+// The output of a Function should scale linearly with the input
+// vector, i.e. if the all entries of the input vector are doubled,
+// the output value should double, too.
+type Function func(util.Histogram) float64
 
-func Gini(freq []int) float64 {
+func Gini(freq util.Histogram) float64 {
 	var res float64
-	n := sum(freq)
+	n := float64(freq.Sum())
 	for _, ni := range freq {
-		pi := float64(ni) / float64(n)
-		res += pi * (1 - pi)
+		floatNi := float64(ni)
+		pi := floatNi / n
+		res += floatNi * (1 - pi)
 	}
 	return res
 }
 
-func Entropy(freq []int) float64 {
+func Entropy(freq util.Histogram) float64 {
 	var res float64
-	n := sum(freq)
+	n := float64(freq.Sum())
 	for _, ni := range freq {
-		pi := float64(ni) / float64(n)
+		floatNi := float64(ni)
+		pi := floatNi / n
 		if pi <= 1e-6 {
 			continue
 		}
-		res -= pi * math.Log(pi)
+		res -= floatNi * math.Log(pi)
 	}
 	return res
 }
 
-func MisclassificationError(freq []int) float64 {
-	n := sum(freq)
+func MisclassificationError(freq util.Histogram) float64 {
+	n := freq.Sum()
 	max := 0
 	for _, ni := range freq {
 		if ni > max {
 			max = ni
 		}
 	}
-	return float64(n-max) / float64(n)
-}
-
-func sum(freq []int) int {
-	res := 0
-	for _, ni := range freq {
-		res += ni
-	}
-	return res
+	return float64(n - max)
 }

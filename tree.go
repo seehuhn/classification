@@ -18,14 +18,9 @@ package classification
 
 import (
 	"fmt"
+	"github.com/seehuhn/classification/util"
 	"strings"
 )
-
-// StopFunction is the type of function used to decide when to grow
-// branches of a classification tree when the tree is originally
-// constructed (i.e. before pruning).  The default stop function keeps
-// adding branches until only one node is left.
-type StopFunction func([]int) bool
 
 // Tree is the (opaque) data type to represent a classification tree.
 type Tree struct {
@@ -36,7 +31,7 @@ type Tree struct {
 	limit      float64
 
 	// fields used for leaf nodes
-	counts []int
+	counts util.Histogram
 }
 
 func (t *Tree) doFormat(indent int) []string {
@@ -74,7 +69,7 @@ func (t *Tree) String() string {
 func (t *Tree) Lookup(x []float64) []float64 {
 	for {
 		if t.leftChild == nil {
-			return probabilities(t.counts)
+			return t.counts.Probabilities()
 		}
 		if x[t.column] <= t.limit {
 			t = t.leftChild

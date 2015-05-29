@@ -3,6 +3,7 @@ package classification
 import (
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
+	"github.com/seehuhn/classification/util"
 	"sort"
 )
 
@@ -16,11 +17,9 @@ type TreeBuilder struct {
 }
 
 var DefaultTreeBuilder = &TreeBuilder{
-	XValLoss: loss.ZeroOne,
-	K:        5,
-	StopGrowth: func(y []int) bool {
-		return len(y) <= 1
-	},
+	XValLoss:   loss.ZeroOne,
+	K:          5,
+	StopGrowth: StopIfAtMost(1),
 	SplitScore: impurity.Gini,
 	PruneScore: impurity.MisclassificationError,
 }
@@ -64,7 +63,16 @@ func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, fl
 	for k := 0; k < b.K; k++ {
 		learnRows, testRows := getXValSets(k, b.K, n)
 
-		trees := b.tryTrees(x, classes, response, learnRows, alpha)
+		// build the initial tree
+		learnHist := util.GetHist(learnRows, classes, response)
+		xb := &xBuilder{*b, x, classes, response}
+		tree := xb.getFullTree(learnRows, learnHist)
+
+		// get all candidates for pruning the tree
+		candidates := b.prunedTrees(tree, classes)
+
+		// get the optimally pruned tree for every alpha
+		trees := b.tryTrees(candidates, alpha)
 
 		cache := make(map[*Tree]float64)
 		for l, tree := range trees {
@@ -96,7 +104,12 @@ func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, fl
 	}
 
 	rows := intRange(len(response))
-	tree := b.tryTrees(x, classes, response, rows, []float64{bestAlpha})[0]
+	hist := util.GetHist(rows, classes, response)
+	xb := &xBuilder{*b, x, classes, response}
+	tree := xb.getFullTree(rows, hist)
+
+	candidates := b.prunedTrees(tree, classes)
+	tree = b.tryTrees(candidates, []float64{bestAlpha})[0]
 
 	return tree, bestExpectedLoss
 }
@@ -108,16 +121,8 @@ type xBuilder struct {
 	response []int
 }
 
-func (b *xBuilder) build(rows []int) *Tree {
-	y := make([]int, len(rows))
-	hist := make([]int, b.classes)
-	for i, row := range rows {
-		yi := b.response[row]
-		y[i] = yi
-		hist[yi]++
-	}
-
-	if b.StopGrowth(y) {
+func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
+	if b.StopGrowth(hist) {
 		return &Tree{
 			counts: hist,
 		}
@@ -126,48 +131,55 @@ func (b *xBuilder) build(rows []int) *Tree {
 	best := b.findBestSplit(rows, hist)
 
 	return &Tree{
-		leftChild:  b.build(best.Left),
-		rightChild: b.build(best.Right),
+		leftChild:  b.getFullTree(best.Left, best.LeftHist),
+		rightChild: b.getFullTree(best.Right, best.RightHist),
 		column:     best.Col,
 		limit:      best.Limit,
+		counts:     hist,
 	}
 }
 
-type searchResult struct {
-	Col         int
-	Limit       float64
-	Left, Right []int
-	Score       float64
-}
-
-func (b *xBuilder) findBestSplit(rows []int, hist []int) *searchResult {
+func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult {
 	best := &searchResult{}
 	first := true
 	for col := 0; col < b.x.p; col++ {
+		rows = copyIntSlice(rows)
 		sort.Sort(&colSort{b.x, rows, col})
 
-		leftFreq := make([]int, len(hist))
-		rightFreq := copyIntSlice(hist)
+		leftHist := make(util.Histogram, len(hist))
+		var rightHist util.Histogram = copyIntSlice(hist)
 		for i := 1; i < len(rows); i++ {
-			limit := (b.x.At(rows[i-1], col) + b.x.At(rows[i], col)) / 2
 			yi := b.response[rows[i-1]]
-			leftFreq[yi]++
-			rightFreq[yi]--
-			leftScore := b.SplitScore(leftFreq)
-			rightScore := b.SplitScore(rightFreq)
-			p := float64(i) / float64(len(rows))
-			score := leftScore*p + rightScore*(1-p)
+			leftHist[yi]++
+			rightHist[yi]--
+			leftScore := b.SplitScore(leftHist)
+			rightScore := b.SplitScore(rightHist)
+			// TODO(voss): check that the score is computed correctly
+			score := (leftScore + rightScore) / float64(len(rows))
 			if first || score < best.Score {
 				best.Col = col
-				best.Limit = limit
-				best.Left = copyIntSlice(rows[:i])
-				best.Right = copyIntSlice(rows[i:])
+				best.Limit = (b.x.At(rows[i-1], col) + b.x.At(rows[i], col)) / 2
+				best.Left = rows[:i]
+				best.Right = rows[i:]
+				best.LeftHist = copyIntSlice(leftHist)
+				best.RightHist = copyIntSlice(rightHist)
 				best.Score = score
 				first = false
 			}
 		}
+		if rightHist.Sum() != 1 { // only rows[len(rows)-1] should be there
+			panic("wrong histogram passed to findBestSplit")
+		}
 	}
 	return best
+}
+
+type searchResult struct {
+	Col                 int
+	Limit               float64
+	Left, Right         []int
+	LeftHist, RightHist util.Histogram
+	Score               float64
 }
 
 type colSort struct {
