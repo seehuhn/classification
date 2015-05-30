@@ -24,14 +24,13 @@ import (
 
 // Tree is the (opaque) data type to represent a classification tree.
 type Tree struct {
+	counts util.Histogram
+
 	// fields used for internal nodes
 	leftChild  *Tree
 	rightChild *Tree
 	column     int
 	limit      float64
-
-	// fields used for leaf nodes
-	counts util.Histogram
 }
 
 func (t *Tree) doFormat(indent int) []string {

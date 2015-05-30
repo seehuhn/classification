@@ -2,10 +2,10 @@ package classification
 
 import (
 	"github.com/seehuhn/classification/impurity"
-	"testing"
+	. "gopkg.in/check.v1"
 )
 
-func TestFindBestSplit1(t *testing.T) {
+func (_ *Tests) TestFindBestSplit1(c *C) {
 	n := 1000
 	k := n / 3
 	raw := make([]float64, n)
@@ -34,11 +34,11 @@ func TestFindBestSplit1(t *testing.T) {
 	}
 	best := b.findBestSplit(rows, total)
 	if len(best.Left) != k || len(best.Right) != n-k {
-		t.Error("wrong split: expected", k, "got", len(best.Left))
+		c.Error("wrong split: expected", k, "got", len(best.Left))
 	}
 }
 
-func TestFindBestSplit2(t *testing.T) {
+func (_ *Tests) TestFindBestSplit2(c *C) {
 	n1 := 3
 	n2 := 7
 	k2 := 5
@@ -73,12 +73,12 @@ func TestFindBestSplit2(t *testing.T) {
 	}
 	best := b.findBestSplit(rows, total)
 	if len(best.Left) != k2*n1 || len(best.Right) != (n2-k2)*n1 {
-		t.Error("wrong split: expected", k2*n1, (n2-k2)*n1,
+		c.Error("wrong split: expected", k2*n1, (n2-k2)*n1,
 			"got", len(best.Left), len(best.Right))
 	}
 }
 
-func TestFindBestSplit3(t *testing.T) {
+func (_ *Tests) TestFindBestSplit3(c *C) {
 	n1 := 29
 	k1 := 11
 	n2 := 37
@@ -116,7 +116,7 @@ func TestFindBestSplit3(t *testing.T) {
 	}
 	best := b.findBestSplit(rows, total)
 	if len(best.Left) != k1*n2 || len(best.Right) != (n1-k1)*n2 {
-		t.Error("wrong split: expected", k1*n2, (n1-k1)*n2,
+		c.Error("wrong split: expected", k1*n2, (n1-k1)*n2,
 			"got", len(best.Left), len(best.Right))
 	}
 }
