@@ -20,14 +20,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/mt19937"
 	"log"
-	"math"
 	"math/rand"
 	"os"
 	"runtime/pprof"
+	"time"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -55,9 +54,9 @@ func main() {
 	}
 
 	rng = rand.New(mt19937.New())
-	// rng.Seed(1)
+	rng.Seed(time.Now().UnixNano())
 
-	n := 1000
+	n := 10
 	raw := make([]float64, n)
 	response := make([]int, n)
 	for i := 0; i < n; i++ {
@@ -65,14 +64,11 @@ func main() {
 	}
 	x := classification.NewMatrix(n, 1, raw)
 
-	fmt.Println("start")
 	builder := &classification.TreeBuilder{
-		StopGrowth: classification.StopIfAtMost(10),
+		StopGrowth: classification.StopIfAtMost(1),
 	}
-	tree, estLoss := builder.NewTree(x, 2, response)
-	fmt.Println("stop")
-
-	fmt.Println(tree.Format())
+	builder.NewTree(x, 2, response)
+	// tree, estLoss := builder.NewTree(x, 2, response)
 
 	// tree.ForeachLeafRegion(1, func(a, b []float64, hist util.Histogram) {
 	//	ai := a[0]
@@ -89,17 +85,17 @@ func main() {
 	//	fmt.Println("")
 	// })
 
-	N := 1000
-	var lVal, lSquaredVal float64
-	for j := 0; j < N; j++ {
-		xj, yj := sample()
-		pj := tree.Lookup([]float64{xj})
-		l := classification.DefaultTreeBuilder.XValLoss(yj, pj)
-		lVal += l
-		lSquaredVal += l * l
-	}
-	lVal /= float64(N)
-	lSquaredVal /= float64(N)
+	// N := 1000
+	// var lVal, lSquaredVal float64
+	// for j := 0; j < N; j++ {
+	//	xj, yj := sample()
+	//	pj := tree.Lookup([]float64{xj})
+	//	l := classification.DefaultTreeBuilder.XValLoss(yj, pj)
+	//	lVal += l
+	//	lSquaredVal += l * l
+	// }
+	// lVal /= float64(N)
+	// lSquaredVal /= float64(N)
 
-	fmt.Println(n, estLoss, lVal, math.Sqrt((lSquaredVal-lVal*lVal)/float64(N)))
+	// fmt.Println(n, estLoss, lVal, math.Sqrt((lSquaredVal-lVal*lVal)/float64(N)))
 }

@@ -27,7 +27,7 @@ import (
 // output should be 0, if only one value is represented in the
 // histogram, and positive otherwise.
 //
-// The output of a Function should scale linearly with the input
+// The output of a `Function` should scale linearly with the input
 // vector, i.e. if the all entries of the input vector are doubled,
 // the output value should double, too.
 type Function func(util.Histogram) float64
@@ -58,9 +58,10 @@ func Entropy(freq util.Histogram) float64 {
 }
 
 func MisclassificationError(freq util.Histogram) float64 {
-	n := freq.Sum()
+	n := 0
 	max := 0
 	for _, ni := range freq {
+		n += ni
 		if ni > max {
 			max = ni
 		}
