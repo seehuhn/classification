@@ -13,11 +13,3 @@ func copyIntSlice(src []int) []int {
 	copy(res, src)
 	return res
 }
-
-func applyRows(data []int, rows []int) []int {
-	res := make([]int, len(rows))
-	for i, row := range rows {
-		res[i] = data[row]
-	}
-	return res
-}

@@ -5,7 +5,7 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-func (_ *Tests) TestFindBestSplit1(c *C) {
+func (*Tests) TestFindBestSplit1(c *C) {
 	n := 1000
 	k := n / 3
 	raw := make([]float64, n)
@@ -32,13 +32,13 @@ func (_ *Tests) TestFindBestSplit1(c *C) {
 		yi := response[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(rows, total)
+	best := b.findBestSplit(rows, total, 0)
 	if len(best.Left) != k || len(best.Right) != n-k {
 		c.Error("wrong split: expected", k, "got", len(best.Left))
 	}
 }
 
-func (_ *Tests) TestFindBestSplit2(c *C) {
+func (*Tests) TestFindBestSplit2(c *C) {
 	n1 := 3
 	n2 := 7
 	k2 := 5
@@ -71,14 +71,14 @@ func (_ *Tests) TestFindBestSplit2(c *C) {
 		yi := response[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(rows, total)
+	best := b.findBestSplit(rows, total, 0)
 	if len(best.Left) != k2*n1 || len(best.Right) != (n2-k2)*n1 {
 		c.Error("wrong split: expected", k2*n1, (n2-k2)*n1,
 			"got", len(best.Left), len(best.Right))
 	}
 }
 
-func (_ *Tests) TestFindBestSplit3(c *C) {
+func (*Tests) TestFindBestSplit3(c *C) {
 	n1 := 29
 	k1 := 11
 	n2 := 37
@@ -114,7 +114,7 @@ func (_ *Tests) TestFindBestSplit3(c *C) {
 		yi := response[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(rows, total)
+	best := b.findBestSplit(rows, total, 0)
 	if len(best.Left) != k1*n2 || len(best.Right) != (n1-k1)*n2 {
 		c.Error("wrong split: expected", k1*n2, (n1-k1)*n2,
 			"got", len(best.Left), len(best.Right))

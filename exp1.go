@@ -55,9 +55,9 @@ func main() {
 	}
 
 	rng = rand.New(mt19937.New())
-	rng.Seed(1)
+	// rng.Seed(1)
 
-	n := 10000
+	n := 1000
 	raw := make([]float64, n)
 	response := make([]int, n)
 	for i := 0; i < n; i++ {
@@ -66,8 +66,28 @@ func main() {
 	x := classification.NewMatrix(n, 1, raw)
 
 	fmt.Println("start")
-	tree, estLoss := classification.NewTree(x, 2, response)
+	builder := &classification.TreeBuilder{
+		StopGrowth: classification.StopIfAtMost(10),
+	}
+	tree, estLoss := builder.NewTree(x, 2, response)
 	fmt.Println("stop")
+
+	fmt.Println(tree.Format())
+
+	// tree.ForeachLeafRegion(1, func(a, b []float64, hist util.Histogram) {
+	//	ai := a[0]
+	//	if ai < 0 {
+	//		ai = 0
+	//	}
+	//	bi := b[0]
+	//	if bi > 1 {
+	//		bi = 1
+	//	}
+	//	q := float64(hist[1]) / float64(hist[0]+hist[1])
+	//	fmt.Println(ai, q)
+	//	fmt.Println(bi, q)
+	//	fmt.Println("")
+	// })
 
 	N := 1000
 	var lVal, lSquaredVal float64
@@ -80,8 +100,6 @@ func main() {
 	}
 	lVal /= float64(N)
 	lSquaredVal /= float64(N)
-
-	fmt.Println(tree.Format())
 
 	fmt.Println(n, estLoss, lVal, math.Sqrt((lSquaredVal-lVal*lVal)/float64(N)))
 }

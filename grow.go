@@ -1,6 +1,7 @@
 package classification
 
 import (
+	"fmt"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/util"
@@ -52,6 +53,14 @@ func (b *TreeBuilder) setDefaults() {
 func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, float64) {
 	b.setDefaults()
 
+	if true {
+		rows := intRange(len(response))
+		hist := util.GetHist(rows, classes, response)
+		xb := &xBuilder{*b, x, classes, response}
+		tree := xb.getFullTree(rows, hist, 0)
+		return tree, 0
+	}
+
 	n := len(response)
 
 	alphaSteps := 50
@@ -66,7 +75,7 @@ func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, fl
 		// build the initial tree
 		learnHist := util.GetHist(learnRows, classes, response)
 		xb := &xBuilder{*b, x, classes, response}
-		tree := xb.getFullTree(learnRows, learnHist)
+		tree := xb.getFullTree(learnRows, learnHist, 0)
 
 		// get all candidates for pruning the tree
 		candidates := b.prunedTrees(tree, classes)
@@ -106,7 +115,7 @@ func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, fl
 	rows := intRange(len(response))
 	hist := util.GetHist(rows, classes, response)
 	xb := &xBuilder{*b, x, classes, response}
-	tree := xb.getFullTree(rows, hist)
+	tree := xb.getFullTree(rows, hist, 0)
 
 	candidates := b.prunedTrees(tree, classes)
 	tree = b.tryTrees(candidates, []float64{bestAlpha})[0]
@@ -121,25 +130,29 @@ type xBuilder struct {
 	response []int
 }
 
-func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
-	if b.StopGrowth(hist) {
+func (b *xBuilder) getFullTree(rows []int, hist util.Histogram, depth int) *Tree {
+	if len(rows) != hist.Sum() {
+		panic("inconsistent input for getFullTree")
+	}
+
+	if b.StopGrowth(hist) || depth >= 2 {
 		return &Tree{
-			counts: hist,
+			Hist: hist,
 		}
 	}
 
-	best := b.findBestSplit(rows, hist)
+	best := b.findBestSplit(rows, hist, depth)
 
 	return &Tree{
-		leftChild:  b.getFullTree(best.Left, best.LeftHist),
-		rightChild: b.getFullTree(best.Right, best.RightHist),
-		column:     best.Col,
-		limit:      best.Limit,
-		counts:     hist,
+		Hist:       hist,
+		LeftChild:  b.getFullTree(best.Left, best.LeftHist, depth+1),
+		RightChild: b.getFullTree(best.Right, best.RightHist, depth+1),
+		Column:     best.Col,
+		Limit:      best.Limit,
 	}
 }
 
-func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult {
+func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram, depth int) *searchResult {
 	best := &searchResult{}
 	first := true
 	for col := 0; col < b.x.p; col++ {
@@ -156,6 +169,11 @@ func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult 
 			rightScore := b.SplitScore(rightHist)
 			// TODO(voss): check that the score is computed correctly
 			score := (leftScore + rightScore) / float64(len(rows))
+
+			if depth == 0 {
+				fmt.Println(col, i, (b.x.At(rows[i-1], col)+b.x.At(rows[i], col))/2, score)
+			}
+
 			if first || score < best.Score {
 				best.Col = col
 				best.Limit = (b.x.At(rows[i-1], col) + b.x.At(rows[i], col)) / 2
@@ -167,7 +185,7 @@ func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult 
 				first = false
 			}
 		}
-		if rightHist.Sum() != 1 { // only rows[len(rows)-1] should be there
+		if rightHist.Sum() != 1 { // rows[len(rows)-1] should be still there
 			panic("wrong histogram passed to findBestSplit")
 		}
 	}

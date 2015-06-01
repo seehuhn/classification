@@ -2,6 +2,7 @@ package classification
 
 import (
 	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/util"
 	"math"
 )
 
@@ -10,7 +11,7 @@ func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 	for {
 		candidates = append(candidates, tree)
 
-		if tree.leftChild == nil {
+		if tree.LeftChild == nil {
 			break
 		}
 
@@ -39,13 +40,13 @@ type pruneCtx struct {
 //
 // The method returns the total score of the full subtree.
 func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) float64 {
-	collapsedScore := ctx.pruneScore(t.counts)
-	if t.leftChild == nil {
+	collapsedScore := ctx.pruneScore(t.Hist)
+	if t.LeftChild == nil {
 		return collapsedScore
 	}
 
-	leftFullScore := ctx.findWeakestLink(t.leftChild, append(path, left))
-	rightFullScore := ctx.findWeakestLink(t.rightChild, append(path, right))
+	leftFullScore := ctx.findWeakestLink(t.LeftChild, append(path, left))
+	rightFullScore := ctx.findWeakestLink(t.RightChild, append(path, right))
 	fullScore := leftFullScore + rightFullScore
 
 	penalty := collapsedScore - fullScore
@@ -69,30 +70,30 @@ func collapseSubtree(tree *Tree, path []direction) *Tree {
 	for i, dir := range path {
 		spine[i] = t
 		if dir == left {
-			t = t.leftChild
+			t = t.LeftChild
 		} else {
-			t = t.rightChild
+			t = t.RightChild
 		}
 	}
 	res := &Tree{
-		counts: t.counts,
+		Hist: t.Hist,
 	}
 	for i := n - 1; i >= 0; i-- {
 		if path[i] == left {
 			res = &Tree{
-				leftChild:  res,
-				rightChild: spine[i].rightChild,
-				column:     spine[i].column,
-				limit:      spine[i].limit,
-				counts:     spine[i].counts,
+				Hist:       spine[i].Hist,
+				LeftChild:  res,
+				RightChild: spine[i].RightChild,
+				Column:     spine[i].Column,
+				Limit:      spine[i].Limit,
 			}
 		} else {
 			res = &Tree{
-				leftChild:  spine[i].leftChild,
-				rightChild: res,
-				column:     spine[i].column,
-				limit:      spine[i].limit,
-				counts:     spine[i].counts,
+				Hist:       spine[i].Hist,
+				LeftChild:  spine[i].LeftChild,
+				RightChild: res,
+				Column:     spine[i].Column,
+				Limit:      spine[i].Limit,
 			}
 		}
 	}
@@ -107,10 +108,10 @@ const (
 )
 
 func (t *Tree) costComplexityScore(score impurity.Function) (loss float64, leaves int) {
-	t.foreachLeaf(func(t *Tree, _ int) {
+	t.ForeachLeaf(func(hist util.Histogram, _ int) {
 		leaves++
-		loss += score(t.counts)
-	}, 0)
+		loss += score(hist)
+	})
 	return
 }
 
