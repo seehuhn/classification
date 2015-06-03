@@ -15,3 +15,16 @@ func StopIfAtMost(n int) StopFunction {
 		return freq.Sum() <= n
 	}
 }
+
+func StopIfHomogeneous(hist util.Histogram) bool {
+	k := 0
+	for _, ni := range hist {
+		if ni > 0 {
+			k++
+			if k > 1 {
+				return false
+			}
+		}
+	}
+	return true
+}

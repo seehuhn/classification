@@ -21,6 +21,7 @@ package main
 import (
 	"flag"
 	"github.com/seehuhn/classification"
+	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/mt19937"
 	"log"
 	"math/rand"
@@ -35,7 +36,7 @@ var rng *rand.Rand
 
 func sample() (x float64, y int) {
 	x = rng.Float64()
-	p := x
+	p := 0.25 + 0.5*x
 	if rng.Float64() < p {
 		y = 1
 	}
@@ -56,7 +57,7 @@ func main() {
 	rng = rand.New(mt19937.New())
 	rng.Seed(time.Now().UnixNano())
 
-	n := 10
+	n := 20
 	raw := make([]float64, n)
 	response := make([]int, n)
 	for i := 0; i < n; i++ {
@@ -65,7 +66,7 @@ func main() {
 	x := classification.NewMatrix(n, 1, raw)
 
 	builder := &classification.TreeBuilder{
-		StopGrowth: classification.StopIfAtMost(1),
+		PruneScore: impurity.Gini,
 	}
 	builder.NewTree(x, 2, response)
 	// tree, estLoss := builder.NewTree(x, 2, response)

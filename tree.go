@@ -51,13 +51,14 @@ type Tree struct {
 func (t *Tree) doFormat(indent int) []string {
 	pfx := strings.Repeat("  ", indent)
 	res := []string{}
+	res = append(res, pfx+fmt.Sprintf("%v", t.Hist))
 	if t.LeftChild != nil {
 		res = append(res, pfx+fmt.Sprintf("if x[%d] <= %g:", t.Column, t.Limit))
 		res = append(res, t.LeftChild.doFormat(indent+1)...)
 		res = append(res, pfx+"else:")
 		res = append(res, t.RightChild.doFormat(indent+1)...)
 	} else {
-		res = append(res, pfx+fmt.Sprintf("%v", t.Hist))
+		// res = append(res, pfx+fmt.Sprintf("%v", t.Hist))
 	}
 
 	return res

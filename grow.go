@@ -19,7 +19,7 @@ type TreeBuilder struct {
 var DefaultTreeBuilder = &TreeBuilder{
 	XValLoss:   loss.ZeroOne,
 	K:          5,
-	StopGrowth: StopIfAtMost(1),
+	StopGrowth: StopIfHomogeneous,
 	SplitScore: impurity.Gini,
 	PruneScore: impurity.MisclassificationError,
 }

@@ -9,8 +9,8 @@ import (
 
 func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 	candidates := []*Tree{tree}
-	fmt.Println(tree.Format())
 	for tree.LeftChild != nil {
+		fmt.Println(tree.Format())
 		ctx := &pruneCtx{
 			lowestPenalty: math.Inf(1),
 			pruneScore:    b.PruneScore,
@@ -18,8 +18,8 @@ func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 		ctx.findWeakestLink(tree, nil)
 		tree = collapseSubtree(tree, ctx.bestPath)
 		candidates = append(candidates, tree)
+		fmt.Println("----------------------")
 	}
-	fmt.Println("----------------------")
 	return candidates
 }
 

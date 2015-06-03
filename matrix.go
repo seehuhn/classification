@@ -19,6 +19,7 @@ package classification
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Matrix struct {
@@ -45,6 +46,52 @@ func (mat *Matrix) At(i, j int) float64 {
 
 func (mat *Matrix) Row(i int) []float64 {
 	return mat.data[i*mat.p : (i+1)*mat.p]
+}
+
+func (mat *Matrix) Format(format string) string {
+	entries := [][]string{}
+	for i := 0; i < mat.n; i++ {
+		row := []string{}
+		for j := 0; j < mat.p; j++ {
+			sep := ", "
+			if j == mat.p-1 {
+				sep = ";"
+				if i == mat.n-1 {
+					sep = " ]"
+				}
+			}
+			entry := fmt.Sprintf(format, mat.data[i*mat.p+j]) + sep
+			row = append(row, entry)
+		}
+		entries = append(entries, row)
+	}
+
+	for j := 0; j < mat.p; j++ {
+		width := 0
+		for i := 0; i < mat.n; i++ {
+			l := len(entries[i][j])
+			if l > width {
+				width = l
+			}
+		}
+		for i := 0; i < mat.n; i++ {
+			entries[i][j] += strings.Repeat(" ", width-len(entries[i][j]))
+		}
+	}
+
+	rows := []string{}
+	for i, rowEntries := range entries {
+		head := "  "
+		if i == 0 {
+			head = "[ "
+		}
+		rows = append(rows, head+strings.Join(rowEntries, ""))
+	}
+	return strings.Join(rows, "\n")
+}
+
+func (mat *Matrix) String() string {
+	return mat.Format("%.6g")
 }
 
 func (mat *Matrix) WriteCSV(fname string) {
