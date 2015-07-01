@@ -3,6 +3,7 @@ package classification
 import (
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
+	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/util"
 	"sort"
 )
@@ -49,7 +50,7 @@ func (b *TreeBuilder) setDefaults() {
 //
 // The return values are the new tree and an estimate for the average
 // value of the loss function (given by `b.XValLoss`).
-func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, float64) {
+func (b *TreeBuilder) NewTree(x *matrix.Float64, classes int, response []int) (*Tree, float64) {
 	b.setDefaults()
 
 	n := len(response)
@@ -116,7 +117,7 @@ func (b *TreeBuilder) NewTree(x *Matrix, classes int, response []int) (*Tree, fl
 
 type xBuilder struct {
 	TreeBuilder
-	x        *Matrix
+	x        *matrix.Float64
 	classes  int
 	response []int
 }
@@ -142,7 +143,8 @@ func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
 func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult {
 	best := &searchResult{}
 	first := true
-	for col := 0; col < b.x.p; col++ {
+	_, p := b.x.Shape()
+	for col := 0; col < p; col++ {
 		rows = copyIntSlice(rows)
 		sort.Sort(&colSort{b.x, rows, col})
 
@@ -180,7 +182,7 @@ type searchResult struct {
 }
 
 type colSort struct {
-	x    *Matrix
+	x    *matrix.Float64
 	rows []int
 	col  int
 }

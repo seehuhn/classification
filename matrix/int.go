@@ -1,4 +1,4 @@
-// matrix.go -
+// int.go -
 // Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package classification
+package matrix
 
 import (
 	"fmt"
@@ -22,33 +22,38 @@ import (
 	"strings"
 )
 
-type Matrix struct {
-	n, p int
-	data []float64
+type Int struct {
+	n, p, stride int
+	data         []int
 }
 
-func NewMatrix(n, p int, data []float64) *Matrix {
+func NewInt(n, p, stride int, data []int) *Int {
 	if data == nil {
-		data = make([]float64, n*p)
+		data = make([]int, n*p)
 	} else if len(data) < n*p {
 		panic("not enough data provided")
 	}
-	return &Matrix{
-		n:    n,
-		p:    p,
-		data: data,
+	if stride == 0 {
+		stride = p
+	}
+	return &Int{
+		n:      n,
+		p:      p,
+		stride: stride,
+		data:   data,
 	}
 }
 
-func (mat *Matrix) At(i, j int) float64 {
-	return mat.data[i*mat.p+j]
+func (mat *Int) At(i, j int) int {
+	return mat.data[i*mat.stride+j]
 }
 
-func (mat *Matrix) Row(i int) []float64 {
-	return mat.data[i*mat.p : (i+1)*mat.p]
+func (mat *Int) Row(i int) []int {
+	base := i * mat.stride
+	return mat.data[base : base+mat.p]
 }
 
-func (mat *Matrix) Format(format string) string {
+func (mat *Int) Format(format string) string {
 	entries := [][]string{}
 	for i := 0; i < mat.n; i++ {
 		row := []string{}
@@ -60,7 +65,7 @@ func (mat *Matrix) Format(format string) string {
 					sep = " ]"
 				}
 			}
-			entry := fmt.Sprintf(format, mat.data[i*mat.p+j]) + sep
+			entry := fmt.Sprintf(format, mat.data[i*mat.stride+j]) + sep
 			row = append(row, entry)
 		}
 		entries = append(entries, row)
@@ -90,11 +95,11 @@ func (mat *Matrix) Format(format string) string {
 	return strings.Join(rows, "\n")
 }
 
-func (mat *Matrix) String() string {
+func (mat *Int) String() string {
 	return mat.Format("%.6g")
 }
 
-func (mat *Matrix) WriteCSV(fname string) {
+func (mat *Int) WriteCSV(fname string) {
 	fd, err := os.Create(fname)
 	if err != nil {
 		panic(err)

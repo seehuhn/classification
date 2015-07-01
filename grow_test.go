@@ -2,6 +2,7 @@ package classification
 
 import (
 	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/matrix"
 	. "gopkg.in/check.v1"
 )
 
@@ -16,7 +17,7 @@ func (*Tests) TestFindBestSplit1(c *C) {
 			response[i] = 1
 		}
 	}
-	data := NewMatrix(n, 1, raw)
+	data := matrix.NewFloat64(n, 1, 0, raw)
 
 	b := &xBuilder{
 		TreeBuilder: TreeBuilder{
@@ -55,7 +56,7 @@ func (*Tests) TestFindBestSplit2(c *C) {
 			pos++
 		}
 	}
-	data := NewMatrix(n1*n2, 2, raw)
+	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
 	b := &xBuilder{
 		TreeBuilder: TreeBuilder{
@@ -98,7 +99,7 @@ func (*Tests) TestFindBestSplit3(c *C) {
 			pos++
 		}
 	}
-	data := NewMatrix(n1*n2, 2, raw)
+	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
 	b := &xBuilder{
 		TreeBuilder: TreeBuilder{

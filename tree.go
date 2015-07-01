@@ -18,6 +18,7 @@ package classification
 
 import (
 	"fmt"
+	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/util"
 	"math"
 	"strings"
@@ -151,6 +152,6 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, fn RegionFunction) {
 // classification tree.  The return values are the new tree and an
 // estimate for the average value of the loss function (given by
 // `DefaultTreeBuilder.XValLoss`).
-func NewTree(x *Matrix, classes int, response []int) (*Tree, float64) {
+func NewTree(x *matrix.Float64, classes int, response []int) (*Tree, float64) {
 	return DefaultTreeBuilder.NewTree(x, classes, response)
 }
