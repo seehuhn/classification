@@ -6,7 +6,7 @@ import (
 	"math"
 )
 
-func (_ *Tests) TestWeakestLink(c *C) {
+func (*Tests) TestWeakestLink(c *C) {
 	tree := &Tree{
 		Hist: []int{24, 45},
 		LeftChild: &Tree{
@@ -43,7 +43,7 @@ func (_ *Tests) TestWeakestLink(c *C) {
 	c.Check(math.Abs(found-expected) <= 1e-6, Equals, true)
 }
 
-func (_ *Tests) TestCollapse(c *C) {
+func (*Tests) TestCollapse(c *C) {
 	tree1 := &Tree{
 		Hist: []int{0, 1},
 	}

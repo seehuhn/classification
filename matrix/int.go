@@ -96,7 +96,7 @@ func (mat *Int) Format(format string) string {
 }
 
 func (mat *Int) String() string {
-	return mat.Format("%.6g")
+	return mat.Format("%6d")
 }
 
 func (mat *Int) WriteCSV(fname string) {
@@ -111,7 +111,7 @@ func (mat *Int) WriteCSV(fname string) {
 			if j > 0 {
 				fd.WriteString(",")
 			}
-			fmt.Fprintf(fd, "%g", mat.At(i, j))
+			fmt.Fprintf(fd, "%d", mat.At(i, j))
 		}
 		fd.WriteString("\n")
 	}

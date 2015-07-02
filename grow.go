@@ -149,7 +149,7 @@ func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult 
 		sort.Sort(&colSort{b.x, rows, col})
 
 		leftHist := make(util.Histogram, len(hist))
-		var rightHist util.Histogram = copyIntSlice(hist)
+		var rightHist = copyIntSlice(hist)
 		for i := 1; i < len(rows); i++ {
 			yi := b.response[rows[i-1]]
 			leftHist[yi]++
