@@ -1,7 +1,6 @@
 package classification
 
 import (
-	"fmt"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/util"
 	"math"
@@ -10,7 +9,7 @@ import (
 func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 	candidates := []*Tree{tree}
 	for tree.LeftChild != nil {
-		fmt.Println(tree.Format())
+		// fmt.Println(tree.Format())
 		ctx := &pruneCtx{
 			lowestPenalty: math.Inf(1),
 			pruneScore:    b.PruneScore,
@@ -18,7 +17,7 @@ func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 		ctx.findWeakestLink(tree, nil)
 		tree = collapseSubtree(tree, ctx.bestPath)
 		candidates = append(candidates, tree)
-		fmt.Println("----------------------")
+		// fmt.Println("----------------------")
 	}
 	return candidates
 }
@@ -48,7 +47,7 @@ func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) float64 {
 	fullScore := leftFullScore + rightFullScore
 
 	penalty := collapsedScore - fullScore
-	fmt.Println(path, fullScore, collapsedScore, penalty)
+	// fmt.Println(path, fullScore, collapsedScore, penalty)
 	if penalty < ctx.lowestPenalty {
 		ctx.lowestPenalty = penalty
 		ctx.bestPath = make([]direction, len(path))

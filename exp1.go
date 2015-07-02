@@ -22,6 +22,7 @@ import (
 	"flag"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/mt19937"
 	"log"
 	"math/rand"
@@ -63,7 +64,7 @@ func main() {
 	for i := 0; i < n; i++ {
 		raw[i], response[i] = sample()
 	}
-	x := classification.NewMatrix(n, 1, raw)
+	x := matrix.NewFloat64(n, 1, 0, raw)
 
 	builder := &classification.TreeBuilder{
 		PruneScore: impurity.Gini,

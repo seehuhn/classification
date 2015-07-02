@@ -53,6 +53,17 @@ func (mat *Int) Row(i int) []int {
 	return mat.data[base : base+mat.p]
 }
 
+func (mat *Int) Column(j int) []int {
+	if mat.stride == 1 {
+		return mat.data
+	}
+	res := make([]int, mat.n)
+	for i := 0; i < mat.n; i++ {
+		res[i] = mat.At(i, j)
+	}
+	return res
+}
+
 func (mat *Int) Format(format string) string {
 	entries := [][]string{}
 	for i := 0; i < mat.n; i++ {

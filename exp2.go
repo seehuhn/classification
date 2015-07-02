@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/matrix"
 )
 
@@ -25,6 +26,6 @@ func main() {
 	if err != nil {
 		fmt.Printf("cannot read %s: %s\n", trainFile, err.Error())
 	}
-	fmt.Println(X)
-	fmt.Println(Y)
+	tree, estLoss := classification.NewTree(X, 10, Y.Column(0))
+	fmt.Println(tree.String(), estLoss)
 }
