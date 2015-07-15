@@ -155,3 +155,10 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, fn RegionFunction) {
 func NewTree(x *matrix.Float64, classes int, response []int) (*Tree, float64) {
 	return DefaultTreeBuilder.NewTree(x, classes, response)
 }
+
+func NewFullTree(x *matrix.Float64, classes int, response []int) *Tree {
+	rows := intRange(len(response))
+	hist := util.GetHist(rows, classes, response)
+	xb := &xBuilder{*DefaultTreeBuilder, x, classes, response}
+	return xb.getFullTree(rows, hist)
+}

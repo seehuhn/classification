@@ -30,31 +30,31 @@ type pruneCtx struct {
 }
 
 // The findWeakestLink method updates the fields in `ctx` to indicate
-// the link in the tree which contributes least to the overall `pruneScore`.
+// the "weakest link" in the tree.
 //
 // When called from the outside, the `path` argument must be nil (it
 // is used internally in recursive calls).
 //
-// The method returns the total score of the full subtree.
-func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) float64 {
+// The method returns the total score and number of leaves of the subtree `t`.
+func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) (float64, int) {
 	collapsedScore := ctx.pruneScore(t.Hist)
 	if t.LeftChild == nil {
-		return collapsedScore
+		return collapsedScore, 1
 	}
 
-	leftFullScore := ctx.findWeakestLink(t.LeftChild, append(path, left))
-	rightFullScore := ctx.findWeakestLink(t.RightChild, append(path, right))
+	leftFullScore, leftSize := ctx.findWeakestLink(t.LeftChild, append(path, left))
+	rightFullScore, rightSize := ctx.findWeakestLink(t.RightChild, append(path, right))
 	fullScore := leftFullScore + rightFullScore
+	fullSize := leftSize + rightSize
 
-	penalty := collapsedScore - fullScore
-	// fmt.Println(path, fullScore, collapsedScore, penalty)
+	penalty := (collapsedScore - fullScore) / float64(fullSize-1)
 	if penalty < ctx.lowestPenalty {
 		ctx.lowestPenalty = penalty
 		ctx.bestPath = make([]direction, len(path))
 		copy(ctx.bestPath, path)
 	}
 
-	return fullScore
+	return fullScore, fullSize
 }
 
 // The collapseSubtree function returns a new tree with the subtree rooted at

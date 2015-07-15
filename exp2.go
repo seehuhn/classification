@@ -26,6 +26,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("cannot read %s: %s\n", trainFile, err.Error())
 	}
-	tree, estLoss := classification.NewTree(X, 10, Y.Column(0))
-	fmt.Println(tree.String(), estLoss)
+	tree := classification.NewFullTree(X, 10, Y.Column(0))
+	fmt.Println(tree.String())
+	fmt.Printf("%#v\n", tree)
 }
