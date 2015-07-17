@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/seehuhn/classification"
+	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/matrix"
 )
 
@@ -26,7 +27,13 @@ func main() {
 	if err != nil {
 		fmt.Printf("cannot read %s: %s\n", trainFile, err.Error())
 	}
-	tree := classification.NewFullTree(X, 10, Y.Column(0))
+
+	b := &classification.TreeBuilder{
+		SplitScore: impurity.Entropy,
+	}
+	tree := b.NewFullTree(X, 10, Y.Column(0))
 	fmt.Println(tree.String())
 	fmt.Printf("%#v\n", tree)
+	fmt.Println(tree.LeftChild)
+	fmt.Println(tree.RightChild)
 }

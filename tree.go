@@ -157,8 +157,5 @@ func NewTree(x *matrix.Float64, classes int, response []int) (*Tree, float64) {
 }
 
 func NewFullTree(x *matrix.Float64, classes int, response []int) *Tree {
-	rows := intRange(len(response))
-	hist := util.GetHist(rows, classes, response)
-	xb := &xBuilder{*DefaultTreeBuilder, x, classes, response}
-	return xb.getFullTree(rows, hist)
+	return DefaultTreeBuilder.NewFullTree(x, classes, response)
 }

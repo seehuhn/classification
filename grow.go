@@ -8,6 +8,10 @@ import (
 	"sort"
 )
 
+// TreeBuilder is a structure to store all parameters controlling the
+// growing and pruning of classification trees.  Any zero field values
+// are interpreted as the corresponding values from the
+// `DefaultTreeBuilder` structure.
 type TreeBuilder struct {
 	XValLoss loss.Function
 	K        int
@@ -29,7 +33,7 @@ func (b *TreeBuilder) setDefaults() {
 	if b.XValLoss == nil {
 		b.XValLoss = DefaultTreeBuilder.XValLoss
 	}
-	if b.K <= 0 {
+	if b.K == 0 {
 		b.K = DefaultTreeBuilder.K
 	}
 	if b.StopGrowth == nil {
@@ -41,6 +45,14 @@ func (b *TreeBuilder) setDefaults() {
 	if b.PruneScore == nil {
 		b.PruneScore = DefaultTreeBuilder.PruneScore
 	}
+}
+
+func (b *TreeBuilder) NewFullTree(x *matrix.Float64, classes int, response []int) *Tree {
+	b.setDefaults()
+	rows := intRange(len(response))
+	hist := util.GetHist(rows, classes, response)
+	xb := &xBuilder{*b, x, classes, response}
+	return xb.getFullTree(rows, hist)
 }
 
 // NewTree constructs a new classification tree.
@@ -104,11 +116,7 @@ func (b *TreeBuilder) NewTree(x *matrix.Float64, classes int, response []int) (*
 		}
 	}
 
-	rows := intRange(len(response))
-	hist := util.GetHist(rows, classes, response)
-	xb := &xBuilder{*b, x, classes, response}
-	tree := xb.getFullTree(rows, hist)
-
+	tree := b.NewFullTree(x, classes, response)
 	candidates := b.prunedTrees(tree, classes)
 	tree = b.tryTrees(candidates, []float64{bestAlpha})[0]
 
