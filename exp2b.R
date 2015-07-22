@@ -11,7 +11,7 @@ rm(varNames)
 
 ctl <- rpart.control(
 	minsplit=2,
-	minbucket=1,
+	minbucket=0,
 	cp=0,
 	maxcompete=0,
 	maxsurrogate=0,
