@@ -162,13 +162,21 @@ func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult 
 			yi := b.response[rows[i-1]]
 			leftHist[yi]++
 			rightHist[yi]--
+
+			left := b.x.At(rows[i-1], col)
+			right := b.x.At(rows[i], col)
+			if !(left < right) {
+				continue
+			}
+			limit := (left + right) / 2
+
 			leftScore := b.SplitScore(leftHist)
 			rightScore := b.SplitScore(rightHist)
 			score := leftScore + rightScore
 
 			if first || score < best.Score {
 				best.Col = col
-				best.Limit = (b.x.At(rows[i-1], col) + b.x.At(rows[i], col)) / 2
+				best.Limit = limit
 				best.Left = rows[:i]
 				best.Right = rows[i:]
 				best.LeftHist = copyIntSlice(leftHist)

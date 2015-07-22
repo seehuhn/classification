@@ -78,10 +78,12 @@ func TestReadRow(t *testing.T) {
 	}
 	for _, data := range testData {
 		r := strings.NewReader(data.in)
-		scanner := newTokenizer(r, TextFormat{'\n', ','})
+		scanner := newTokenizer(r,
+			func(int) ColumnType { return Float64Column },
+			TextFormat{'\n', ','})
 		pos := 0
 		for scanner.Scan() {
-			row := scanner.Row()
+			row, _ := scanner.Row()
 			if !floatSlicesEqual(row, data.out[pos]) {
 				t.Errorf("wrong scanner output for %q: expected %v, got %v",
 					data.in, data.out[pos], row)

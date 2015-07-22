@@ -40,6 +40,11 @@ func (*Tests) TestFindBestSplit1(c *C) {
 }
 
 func (*Tests) TestFindBestSplit2(c *C) {
+	//   0 1 2 3 4 5 6
+	// -+-------------
+	// 0|1 1 1 1 1 0 0
+	// 1|1 1 1 1 1 0 0
+	// 2|1 1 1 1 1 0 0
 	n1 := 3
 	n2 := 7
 	k2 := 5
@@ -74,8 +79,8 @@ func (*Tests) TestFindBestSplit2(c *C) {
 	}
 	best := b.findBestSplit(rows, total)
 	if len(best.Left) != k2*n1 || len(best.Right) != (n2-k2)*n1 {
-		c.Error("wrong split: expected", k2*n1, (n2-k2)*n1,
-			"got", len(best.Left), len(best.Right))
+		c.Error("wrong split: expected ", k2*n1, " ", (n2-k2)*n1,
+			" got ", len(best.Left), " ", len(best.Right))
 	}
 }
 
