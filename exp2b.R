@@ -10,7 +10,7 @@ colnames(data$image) <- varNames
 rm(varNames)
 
 ctl <- rpart.control(
-	minsplit=2,
+	minsplit=0,
 	minbucket=0,
 	cp=0,
 	maxcompete=0,
