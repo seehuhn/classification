@@ -10,6 +10,9 @@ import (
 // function keeps adding branches until only one node is left.
 type StopFunction func(util.Histogram) bool
 
+// TODO(voss): use different naming conventions for stop functions and
+// factories.
+
 func StopIfAtMost(n int) StopFunction {
 	return func(freq util.Histogram) bool {
 		return freq.Sum() <= n
