@@ -82,6 +82,7 @@ func (t *Tree) String() string {
 		nodes, maxDepth)
 }
 
+// Return estimated class probabilities for input `x`.
 func (t *Tree) Lookup(x []float64) []float64 {
 	for {
 		if t.LeftChild == nil {

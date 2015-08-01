@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
 )
 
@@ -37,8 +38,20 @@ func main() {
 	}
 
 	b := &classification.TreeBuilder{
+		XValLoss:   loss.Other,
 		SplitScore: impurity.Entropy,
+		K:          2,
 	}
 	tree, est := b.NewTree(XTrain, 10, YTrain.Column(0))
 	fmt.Println(tree, est)
+
+	n, _ := XTest.Shape()
+	sum := 0.0
+	for i := 0; i < n; i++ {
+		correct := YTest.At(i, 0)
+		row := XTest.Row(i)
+		hist := tree.Lookup(row)
+		sum += b.XValLoss(correct, hist)
+	}
+	fmt.Println("test set:", sum/float64(n))
 }

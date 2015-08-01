@@ -17,6 +17,7 @@
 package loss
 
 import (
+	"math"
 	"testing"
 )
 
@@ -51,5 +52,32 @@ func TestLoss(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestZeroOne(t *testing.T) {
+	hist := []float64{1, 3, 2}
+	l0 := ZeroOne(0, hist)
+	l1 := ZeroOne(1, hist)
+	l2 := ZeroOne(2, hist)
+	if math.Abs(l0-1.0) > 1e-6 || math.Abs(l1-0.0) > 1e-6 || math.Abs(l2-1.0) > 1e-6 {
+		t.Error("unexpected loss values, expected 1 0 1, got", l0, l1, l2)
+	}
+
+	hist = []float64{1, 2, 2}
+	l0 = ZeroOne(0, hist)
+	l1 = ZeroOne(1, hist)
+	l2 = ZeroOne(2, hist)
+	if math.Abs(l0-1.0) > 1e-6 || math.Abs(l1-0.5) > 1e-6 || math.Abs(l2-0.5) > 1e-6 {
+		t.Error("unexpected loss values, expected 1 0.5 0.5, got", l0, l1, l2)
+	}
+
+	hist = []float64{1, 1, 1}
+	l0 = ZeroOne(0, hist)
+	l1 = ZeroOne(1, hist)
+	l2 = ZeroOne(2, hist)
+	q := 2.0 / 3.0
+	if math.Abs(l0-q) > 1e-6 || math.Abs(l1-q) > 1e-6 || math.Abs(l2-q) > 1e-6 {
+		t.Error("unexpected loss values, expected 1/3 1/3 1/3, got", l0, l1, l2)
 	}
 }
