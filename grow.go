@@ -80,6 +80,7 @@ func (b *TreeBuilder) NewTree(x *matrix.Float64, classes int, response []int) (*
 		learnHist := util.GetHist(learnRows, classes, response)
 		xb := &xBuilder{*b, x, classes, response}
 		tree := xb.getFullTree(learnRows, learnHist)
+		b.initialPrune(tree)
 
 		// get all candidates for pruning the tree
 		candidates := b.prunedTrees(tree, classes)
@@ -117,6 +118,7 @@ func (b *TreeBuilder) NewTree(x *matrix.Float64, classes int, response []int) (*
 	}
 
 	tree := b.NewFullTree(x, classes, response)
+	b.initialPrune(tree)
 	candidates := b.prunedTrees(tree, classes)
 	tree = b.tryTrees(candidates, []float64{bestAlpha})[0]
 

@@ -6,10 +6,29 @@ import (
 	"math"
 )
 
+const epsilon = 1e-6
+
+// initialPrune modifies the given tree by recursively pruning all
+// leaves where the PruneScore is not increased by the pruning.
+func (b *TreeBuilder) initialPrune(tree *Tree) (float64, int, int) {
+	thisScore := b.PruneScore(tree.Hist)
+	if tree.LeftChild == nil {
+		return thisScore, 1, 0
+	}
+	leftScore, leftNodes, leftPruned := b.initialPrune(tree.LeftChild)
+	rightScore, rightNodes, rightPruned := b.initialPrune(tree.RightChild)
+	totalNodes := leftNodes + rightNodes + 1
+	if thisScore < leftScore+rightScore+epsilon {
+		tree.LeftChild = nil
+		tree.RightChild = nil
+		return thisScore, totalNodes, leftNodes + rightNodes
+	}
+	return thisScore, totalNodes, leftPruned + rightPruned
+}
+
 func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 	candidates := []*Tree{tree}
 	for tree.LeftChild != nil {
-		// fmt.Println(tree.Format())
 		ctx := &pruneCtx{
 			lowestPenalty: math.Inf(1),
 			pruneScore:    b.PruneScore,
@@ -17,10 +36,16 @@ func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
 		ctx.findWeakestLink(tree, nil)
 		tree = collapseSubtree(tree, ctx.bestPath)
 		candidates = append(candidates, tree)
-		// fmt.Println("----------------------")
 	}
 	return candidates
 }
+
+type direction uint8
+
+const (
+	left direction = iota
+	right
+)
 
 type pruneCtx struct {
 	pruneScore impurity.Function
@@ -35,7 +60,8 @@ type pruneCtx struct {
 // When called from the outside, the `path` argument must be nil (it
 // is used internally in recursive calls).
 //
-// The method returns the total score and number of leaves of the subtree `t`.
+// The method returns the total score and number of leaves of the
+// subtree `t`.
 func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) (float64, int) {
 	collapsedScore := ctx.pruneScore(t.Hist)
 	if t.LeftChild == nil {
@@ -97,13 +123,6 @@ func collapseSubtree(tree *Tree, path []direction) *Tree {
 	}
 	return res
 }
-
-type direction uint8
-
-const (
-	left direction = iota
-	right
-)
 
 func (t *Tree) costComplexityScore(score impurity.Function) (loss float64, leaves int) {
 	t.ForeachLeaf(func(hist util.Histogram, _ int) {
