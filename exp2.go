@@ -9,7 +9,11 @@ import (
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
+	"os"
+	"runtime/pprof"
 )
+
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func zipDataColumns(col int) matrix.ColumnType {
 	switch col {
@@ -22,6 +26,14 @@ func zipDataColumns(col int) matrix.ColumnType {
 
 func main() {
 	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			panic(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	trainFile := "zip.train.gz"
 	XTrain, YTrain, err := matrix.ReadAsText(trainFile,
