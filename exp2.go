@@ -57,6 +57,18 @@ func main() {
 	tree, est := b.NewTree(XTrain, 10, YTrain.Column(0))
 	fmt.Println(tree, est)
 
+	fd, err := os.Create("tree.bin")
+	if err != nil {
+		panic(err)
+	}
+	err = tree.WriteTo(fd)
+	if err != nil {
+		panic(err)
+	}
+	fd.Close()
+
+	return
+
 	n, _ := XTest.Shape()
 	sum := 0.0
 	for i := 0; i < n; i++ {

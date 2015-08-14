@@ -2,7 +2,7 @@
 
 library("tree")
 
-X <- read.table("zip.test.gz")
+X <- read.table("zip.train.gz")
 data <- list(image=as.matrix(X[,-1]), digit=as.factor(X[,1]))
 rm(X)
 varNames <- sapply(1:NCOL(data$image), function(col) paste("x",col-1,sep=""))

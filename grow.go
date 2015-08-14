@@ -4,6 +4,7 @@ import (
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/stop"
 	"github.com/seehuhn/classification/util"
 	"sort"
 )
@@ -13,20 +14,47 @@ import (
 // are interpreted as the corresponding values from the
 // `DefaultTreeBuilder` structure.
 type TreeBuilder struct {
-	XValLoss loss.Function
-	K        int
+	// StopGrowth decides for every node of the initial tree whether a
+	// further split is considered.  The default is to stop splitting
+	// nodes once the node only contains a single type of
+	// observations.
+	StopGrowth stop.Function
 
-	StopGrowth StopFunction
+	// SplitScore is the impurity function used when growing the
+	// initial tree.  Splits are (greedily) chosen to minimise the
+	// total `SplitScore`.  The default is to use Gini impurity here.
 	SplitScore impurity.Function
+
+	// PruneScore is the cost function used for cost-complexity
+	// pruning.  Pruning aims to reduce the size of the tree (in order
+	// to avoid overfitting), while keeping the `PruneScore` small.
+	// The default is to use the misclassification error rate for
+	// pruning.
 	PruneScore impurity.Function
+
+	// XValLoss is used to guide the balance between the cost (as
+	// measured by `PruneScore`) and complexity (i.e. the final size
+	// of the tree).  Cost and complexity are balanced to minimise
+	// XValLoss.  The default is to use zero-one loss.
+	XValLoss loss.Function
+
+	// The number of groups to use in cross-validation when estimating
+	// the expected loss.  The default is to use 5 groups.
+	K int
 }
 
+// DefaultTreeBuilder specifies the default parameters for
+// constructing a tree; see the documentation for `TreeBuilder` for
+// the meaning of the individual fields.  The values given in
+// `DefaultTreeBuilder` are used by the `NewTree` function, and to
+// replace zero values in a `TreeBuilder` structure when the
+// `TreeBuilder.NewTree` method is called.
 var DefaultTreeBuilder = &TreeBuilder{
-	XValLoss:   loss.ZeroOne,
-	K:          5,
-	StopGrowth: StopIfHomogeneous,
+	StopGrowth: stop.IfHomogeneous,
 	SplitScore: impurity.Gini,
 	PruneScore: impurity.MisclassificationError,
+	XValLoss:   loss.ZeroOne,
+	K:          5,
 }
 
 func (b *TreeBuilder) setDefaults() {
@@ -47,7 +75,7 @@ func (b *TreeBuilder) setDefaults() {
 	}
 }
 
-func (b *TreeBuilder) NewFullTree(x *matrix.Float64, classes int, response []int) *Tree {
+func (b *TreeBuilder) fullTree(x *matrix.Float64, classes int, response []int) *Tree {
 	b.setDefaults()
 	rows := intRange(len(response))
 	hist := util.GetHist(rows, classes, response)
@@ -117,7 +145,7 @@ func (b *TreeBuilder) NewTree(x *matrix.Float64, classes int, response []int) (*
 		}
 	}
 
-	tree := b.NewFullTree(x, classes, response)
+	tree := b.fullTree(x, classes, response)
 	b.initialPrune(tree)
 	candidates := b.prunedTrees(tree, classes)
 	tree = b.tryTrees(candidates, []float64{bestAlpha})[0]
@@ -131,6 +159,15 @@ type xBuilder struct {
 	classes  int
 	response []int
 }
+
+// plan to reduce the amount of sorting required
+//
+// 1. sort rows by col j: i0, i1, i2, ..., in only once
+// 2. split rows: i0, ..., ik | i{k+1}, ..., in as before
+// 3. for every other row:
+//    - old sort order is: i0', i1', ..., in'
+//    - after the split, the order stays the same, but elements are
+//      sorted into two groups.
 
 func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
 	if b.StopGrowth(hist) {
@@ -151,6 +188,8 @@ func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
 }
 
 func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult {
+	// TODO(voss): notice if the split does not bring any improvement
+	// and, in this case, do not split any further?
 	best := &searchResult{}
 	first := true
 	_, p := b.x.Shape()

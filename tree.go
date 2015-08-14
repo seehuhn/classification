@@ -65,6 +65,7 @@ func (t *Tree) doFormat(indent int) []string {
 	return res
 }
 
+// Format returns a human readable, textual representation of a tree.
 func (t *Tree) Format() string {
 	return strings.Join(t.doFormat(0), "\n")
 }
@@ -82,10 +83,26 @@ func (t *Tree) String() string {
 		nodes, maxDepth)
 }
 
-// Return estimated class probabilities for input `x`.
+// Classes returns the number of classes of the response variable
+// corresponding to the tree `t`.
+func (t *Tree) Classes() int {
+	p := len(t.Hist)
+	if p > 0 {
+		return p
+	}
+	return t.LeftChild.Classes()
+}
+
+// IsLeaf returns true if `t` is a terminal node and returns false if
+// `t` has child nodes.
+func (t *Tree) IsLeaf() bool {
+	return t.LeftChild == nil
+}
+
+// Lookup returns the estimated class probabilities for input `x`.
 func (t *Tree) Lookup(x []float64) []float64 {
 	for {
-		if t.LeftChild == nil {
+		if t.IsLeaf() {
 			return t.Hist.Probabilities()
 		}
 		if x[t.Column] <= t.Limit {
@@ -104,44 +121,56 @@ func (t *Tree) walkPostOrder(fn func(*Tree, int), depth int) {
 	fn(t, depth)
 }
 
-func (t *Tree) ForeachLeaf(fn func(util.Histogram, int)) {
-	t.foreachLeafRecursive(fn, 0)
+// ForeachLeaf calls the function `fn` once for each terminal node of
+// the tree `t`.  The arguments to `fn` are the class counts for the
+// samples corresponding to the node, and the depth of the node in the
+// tree.
+func (t *Tree) ForeachLeaf(fn func(hist util.Histogram, depth int)) {
+	t.foreachLeafRecursive(0, fn)
 }
 
-func (t *Tree) foreachLeafRecursive(fn func(util.Histogram, int), depth int) {
+func (t *Tree) foreachLeafRecursive(depth int, fn func(util.Histogram, int)) {
 	if t.LeftChild != nil {
-		t.LeftChild.foreachLeafRecursive(fn, depth+1)
-		t.RightChild.foreachLeafRecursive(fn, depth+1)
+		t.LeftChild.foreachLeafRecursive(depth+1, fn)
+		t.RightChild.foreachLeafRecursive(depth+1, fn)
 	} else {
 		fn(t.Hist, depth)
 	}
 }
 
-type RegionFunction func(a, b []float64, hist util.Histogram)
-
-func (t *Tree) ForeachLeafRegion(p int, fn RegionFunction) {
+// ForeachLeafRegion calls the function `fn` once for each terminal
+// node in the tree `t`.  The arguments of `fn` are the rectangular
+// region in feature space corresponding to the leaf node (`a` gives
+// the minimal coordinate values, `b` gives the maximal coordinate
+// values, negative infinities in `a` or positive infinities in `b`
+// indicate unconstrained coordinates), the class counts for the
+// samples corresponding to the node, as well as the depth of the node
+// in the tree.
+func (t *Tree) ForeachLeafRegion(p int,
+	fn func(a, b []float64, hist util.Histogram, depth int)) {
 	a := make([]float64, p)
 	b := make([]float64, p)
 	for i := 0; i < p; i++ {
 		a[i] = math.Inf(-1)
 		b[i] = math.Inf(+1)
 	}
-	t.foreachLeafRegionRecursive(a, b, fn)
+	t.foreachLeafRegionRecursive(a, b, 0, fn)
 }
 
-func (t *Tree) foreachLeafRegionRecursive(a, b []float64, fn RegionFunction) {
-	if t.LeftChild == nil {
-		fn(a, b, t.Hist)
+func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
+	fn func(a, b []float64, hist util.Histogram, depth int)) {
+	if t.IsLeaf() {
+		fn(a, b, t.Hist, depth)
 	} else {
 		ai := a[t.Column]
 		bi := b[t.Column]
 
 		b[t.Column] = t.Limit
-		t.LeftChild.foreachLeafRegionRecursive(a, b, fn)
+		t.LeftChild.foreachLeafRegionRecursive(a, b, depth+1, fn)
 
 		a[t.Column] = t.Limit
 		b[t.Column] = bi
-		t.RightChild.foreachLeafRegionRecursive(a, b, fn)
+		t.RightChild.foreachLeafRegionRecursive(a, b, depth+1, fn)
 
 		a[t.Column] = ai
 	}
@@ -150,13 +179,9 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, fn RegionFunction) {
 // NewTree constructs a new classification tree.
 //
 // This function uses the `DefaultTreeBuilder` to construct a new
-// classification tree.  The return values are the new tree and an
-// estimate for the average value of the loss function (given by
-// `DefaultTreeBuilder.XValLoss`).
+// classification tree.  The return values are the new tree and a
+// cross-validated estimate for the average value of the loss function
+// (given by `DefaultTreeBuilder.XValLoss`).
 func NewTree(x *matrix.Float64, classes int, response []int) (*Tree, float64) {
 	return DefaultTreeBuilder.NewTree(x, classes, response)
-}
-
-func NewFullTree(x *matrix.Float64, classes int, response []int) *Tree {
-	return DefaultTreeBuilder.NewFullTree(x, classes, response)
 }

@@ -12,7 +12,7 @@ const epsilon = 1e-6
 // leaves where the PruneScore is not increased by the pruning.
 func (b *TreeBuilder) initialPrune(tree *Tree) (float64, int, int) {
 	thisScore := b.PruneScore(tree.Hist)
-	if tree.LeftChild == nil {
+	if tree.IsLeaf() {
 		return thisScore, 1, 0
 	}
 	leftScore, leftNodes, leftPruned := b.initialPrune(tree.LeftChild)
@@ -64,7 +64,7 @@ type pruneCtx struct {
 // subtree `t`.
 func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) (float64, int) {
 	collapsedScore := ctx.pruneScore(t.Hist)
-	if t.LeftChild == nil {
+	if t.IsLeaf() {
 		return collapsedScore, 1
 	}
 
