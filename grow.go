@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-// TreeBuilder is a structure to store all parameters controlling the
+// TreeBuilder is a structure to store the parameters governing the
 // growing and pruning of classification trees.  Any zero field values
 // are interpreted as the corresponding values from the
 // `DefaultTreeBuilder` structure.
@@ -44,11 +44,11 @@ type TreeBuilder struct {
 }
 
 // DefaultTreeBuilder specifies the default parameters for
-// constructing a tree; see the documentation for `TreeBuilder` for
-// the meaning of the individual fields.  The values given in
-// `DefaultTreeBuilder` are used by the `NewTree` function, and to
-// replace zero values in a `TreeBuilder` structure when the
-// `TreeBuilder.NewTree` method is called.
+// constructing a tree; see the `TreeBuilder` documentation for the
+// meaning of the individual fields.  The values given in
+// `DefaultTreeBuilder` are used by the `TreeFromTrainingsData`
+// function, and to replace zero values in a `TreeBuilder` structure
+// when the `TreeBuilder.TreeFromTrainingsData` method is called.
 var DefaultTreeBuilder = &TreeBuilder{
 	StopGrowth: stop.IfHomogeneous,
 	SplitScore: impurity.Gini,
@@ -83,14 +83,15 @@ func (b *TreeBuilder) fullTree(x *matrix.Float64, classes int, response []int) *
 	return xb.getFullTree(rows, hist)
 }
 
-// NewTree constructs a new classification tree.
+// TreeFromTrainingsData constructs a new classification tree from
+// trainings data.
 //
 // K-fold crossvalidation is used to find the optimal pruning
 // parameter.
 //
 // The return values are the new tree and an estimate for the average
 // value of the loss function (given by `b.XValLoss`).
-func (b *TreeBuilder) NewTree(x *matrix.Float64, classes int, response []int) (*Tree, float64) {
+func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64, response []int) (*Tree, float64) {
 	b.setDefaults()
 
 	n := len(response)
@@ -123,7 +124,7 @@ func (b *TreeBuilder) NewTree(x *matrix.Float64, classes int, response []int) (*
 				cumLoss = loss
 			} else {
 				for _, row := range testRows {
-					prob := tree.Lookup(x.Row(row))
+					prob := tree.EstimateClassProbabilities(x.Row(row))
 					val := b.XValLoss(response[row], prob)
 					cumLoss += val
 				}

@@ -1,4 +1,4 @@
-// exp1.go -
+// exp0.go -
 // Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,29 +20,20 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/util"
 	"github.com/seehuhn/mt19937"
 	"log"
 	"math/rand"
 	"os"
 	"runtime/pprof"
-	"time"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
-var rng *rand.Rand
-
-func sample() (x float64, y int) {
-	x = rng.Float64()
-	p := 0.25 + 0.5*x
-	if rng.Float64() < p {
-		y = 1
-	}
-	return
-}
 
 func main() {
 	flag.Parse()
@@ -55,49 +46,47 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	rng = rand.New(mt19937.New())
-	rng.Seed(time.Now().UnixNano())
+	rng := rand.New(mt19937.New())
+	rng.Seed(12)
 
-	n := 20
-	raw := make([]float64, n)
+	classes := 2
+	means := []float64{-1, 1}
+
+	n := 20000
+	p := 2
+	raw := make([]float64, n*p)
 	response := make([]int, n)
 	for i := 0; i < n; i++ {
-		raw[i], response[i] = sample()
+		response[i] = rng.Intn(classes)
+		for j := 0; j < p; j++ {
+			raw[i*p+j] = rng.NormFloat64() + means[response[i]]
+		}
 	}
-	x := matrix.NewFloat64(n, 1, 0, raw)
+	x := matrix.NewFloat64(n, p, 0, raw)
 
-	builder := &classification.TreeBuilder{
-		PruneScore: impurity.Gini,
+	b := &classification.TreeBuilder{
+		XValLoss: loss.Other,
+		K:        5,
+
+		StopGrowth: func(hist util.Histogram) bool {
+			seen := 0
+			sum := 0
+			for _, ni := range hist {
+				sum += ni
+				if ni > 0 {
+					seen++
+				}
+			}
+			if sum <= 5 {
+				return true
+			}
+			return seen < 2
+		},
+		SplitScore: impurity.Entropy,
+		PruneScore: impurity.MisclassificationError,
 	}
-	builder.NewTree(x, 2, response)
-	// tree, estLoss := builder.NewTree(x, 2, response)
 
-	// tree.ForeachLeafRegion(1, func(a, b []float64, hist util.Histogram) {
-	//	ai := a[0]
-	//	if ai < 0 {
-	//		ai = 0
-	//	}
-	//	bi := b[0]
-	//	if bi > 1 {
-	//		bi = 1
-	//	}
-	//	q := float64(hist[1]) / float64(hist[0]+hist[1])
-	//	fmt.Println(ai, q)
-	//	fmt.Println(bi, q)
-	//	fmt.Println("")
-	// })
+	_, estLoss := b.TreeFromTrainingsData(classes, x, response)
 
-	// N := 1000
-	// var lVal, lSquaredVal float64
-	// for j := 0; j < N; j++ {
-	//	xj, yj := sample()
-	//	pj := tree.Lookup([]float64{xj})
-	//	l := classification.DefaultTreeBuilder.XValLoss(yj, pj)
-	//	lVal += l
-	//	lSquaredVal += l * l
-	// }
-	// lVal /= float64(N)
-	// lSquaredVal /= float64(N)
-
-	// fmt.Println(n, estLoss, lVal, math.Sqrt((lSquaredVal-lVal*lVal)/float64(N)))
+	fmt.Println(n, estLoss)
 }

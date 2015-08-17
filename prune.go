@@ -154,6 +154,7 @@ func (b *TreeBuilder) tryTrees(candidates []*Tree, alpha []float64) []*Tree {
 	if alpha[0] < 0 {
 		var alphaMin float64
 		i := 0
+		// TODO(voss): this is a hack!
 		for alphaMin < 1e-6 {
 			alphaMin = 0.8 * (loss[i+1] - loss[i]) /
 				float64(complexity[i]-complexity[i+1])

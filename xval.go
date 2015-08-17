@@ -1,4 +1,4 @@
-// crossvalidation.go -
+// xval.go -
 // Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,32 @@
 
 package classification
 
+import (
+	"math/rand"
+)
+
+const xValSeed = 1769149487
+
 func getXValSets(k, K, n int) (trainingSet, testSet []int) {
-	trainingSetSize := n * (K - 1) / K
-	trainingSet = make([]int, 0, trainingSetSize+1)
-	testSet = make([]int, 0, n-trainingSetSize)
-	for i := 0; i < n; i++ {
-		if i%K == k {
-			testSet = append(testSet, i)
-		} else {
-			trainingSet = append(trainingSet, i)
-		}
+	if K < 2 {
+		panic("need at least two groups for cross-validation")
 	}
-	return
+
+	testSetSize := n / K
+	if testSetSize < 1 {
+		panic("not enough samples for cross-validation")
+	}
+	a := k * testSetSize
+	b := (k + 1) * testSetSize
+	if k == K-1 {
+		b = n
+	}
+
+	rng := rand.New(rand.NewSource(xValSeed))
+	perm := rng.Perm(n)
+	testSet = make([]int, b-a)
+	copy(testSet, perm[a:b])
+	trainingSet = append(perm[:a], perm[b:]...)
+
+	return trainingSet, testSet
 }

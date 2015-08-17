@@ -65,7 +65,7 @@ func (t *Tree) doFormat(indent int) []string {
 	return res
 }
 
-// Format returns a human readable, textual representation of a tree.
+// Format returns a human readable, textual representation of the tree `t`.
 func (t *Tree) Format() string {
 	return strings.Join(t.doFormat(0), "\n")
 }
@@ -99,11 +99,11 @@ func (t *Tree) IsLeaf() bool {
 	return t.LeftChild == nil
 }
 
-// Lookup returns the estimated class probabilities for input `x`.
-func (t *Tree) Lookup(x []float64) []float64 {
+// lookup returns the terminal node corresponding to input `x`.
+func (t *Tree) lookup(x []float64) *Tree {
 	for {
 		if t.IsLeaf() {
-			return t.Hist.Probabilities()
+			return t
 		}
 		if x[t.Column] <= t.Limit {
 			t = t.LeftChild
@@ -111,6 +111,32 @@ func (t *Tree) Lookup(x []float64) []float64 {
 			t = t.RightChild
 		}
 	}
+}
+
+// GetClassCounts returns the estimated class probabilities for input `x`.
+func (t *Tree) GetClassCounts(x []float64) util.Histogram {
+	return t.lookup(x).Hist
+}
+
+// EstimateClassProbabilities returns the estimated class
+// probabilities for input `x`.
+func (t *Tree) EstimateClassProbabilities(x []float64) []float64 {
+	return t.lookup(x).Hist.Probabilities()
+}
+
+// GuessClass returns tries to guess the class corresponding to input
+// `x`.
+func (t *Tree) GuessClass(x []float64) int {
+	hist := t.lookup(x).Hist
+	bestClass := -1
+	bestCount := -1
+	for class, count := range hist {
+		if count > bestCount {
+			bestCount = count
+			bestClass = class
+		}
+	}
+	return bestClass
 }
 
 func (t *Tree) walkPostOrder(fn func(*Tree, int), depth int) {
@@ -146,8 +172,9 @@ func (t *Tree) foreachLeafRecursive(depth int, fn func(util.Histogram, int)) {
 // indicate unconstrained coordinates), the class counts for the
 // samples corresponding to the node, as well as the depth of the node
 // in the tree.
-func (t *Tree) ForeachLeafRegion(p int,
+func (t *Tree) ForeachLeafRegion(
 	fn func(a, b []float64, hist util.Histogram, depth int)) {
+	p := t.Classes()
 	a := make([]float64, p)
 	b := make([]float64, p)
 	for i := 0; i < p; i++ {
@@ -176,12 +203,18 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 	}
 }
 
-// NewTree constructs a new classification tree.
+// TreeFromTrainingsData constructs a new classification tree from a
+// sample of trainings data.  The function uses the settings from
+// `DefaultTreeBuilder`.
 //
-// This function uses the `DefaultTreeBuilder` to construct a new
-// classification tree.  The return values are the new tree and a
-// cross-validated estimate for the average value of the loss function
-// (given by `DefaultTreeBuilder.XValLoss`).
-func NewTree(x *matrix.Float64, classes int, response []int) (*Tree, float64) {
-	return DefaultTreeBuilder.NewTree(x, classes, response)
+// The argument `classes` gives the number of classes in the response
+// variable.  The rows of the matrix `x` are the observations from the
+// trainings data set, and the corresponding classes are given as the
+// entries of `y` (which must be in the range 0, 1, ..., classes-1).
+//
+// The return values are the new tree and a cross-validated estimate
+// for the average value of the loss function (given by
+// `DefaultTreeBuilder.XValLoss`).
+func TreeFromTrainingsData(classes int, x *matrix.Float64, response []int) (*Tree, float64) {
+	return DefaultTreeBuilder.TreeFromTrainingsData(classes, x, response)
 }

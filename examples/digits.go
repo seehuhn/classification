@@ -50,32 +50,27 @@ func main() {
 	}
 
 	b := &classification.TreeBuilder{
-		XValLoss:   loss.Other,
+		XValLoss:   loss.ZeroOne,
 		SplitScore: impurity.Entropy,
 		K:          2,
 	}
-	tree, est := b.NewTree(XTrain, 10, YTrain.Column(0))
-	fmt.Println(tree, est)
-
-	fd, err := os.Create("tree.bin")
-	if err != nil {
-		panic(err)
-	}
-	err = tree.WriteTo(fd)
-	if err != nil {
-		panic(err)
-	}
-	fd.Close()
-
-	return
+	tree, est := b.TreeFromTrainingsData(10, XTrain, YTrain.Column(0))
+	fmt.Println(tree)
+	fmt.Println("estimated average loss from cross validation", est)
 
 	n, _ := XTest.Shape()
 	sum := 0.0
+	wrong := 0
 	for i := 0; i < n; i++ {
 		correct := YTest.At(i, 0)
 		row := XTest.Row(i)
-		hist := tree.Lookup(row)
+		hist := tree.EstimateClassProbabilities(row)
 		sum += b.XValLoss(correct, hist)
+		if tree.GuessClass(row) != correct {
+			wrong++
+		}
 	}
-	fmt.Println("test set:", sum/float64(n))
+	fmt.Println("average loss from test set", sum/float64(n))
+	fmt.Printf("misclassification rate for test set: %d / %d = %g\n",
+		wrong, n, float64(wrong)/float64(n))
 }

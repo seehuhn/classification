@@ -17,7 +17,7 @@ func Fuzz(data []byte) int {
 	}
 
 	w := &bytes.Buffer{}
-	err = tree.WriteTo(w)
+	err = tree.WriteBinary(w)
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +29,7 @@ func Fuzz(data []byte) int {
 		panic(err)
 	}
 	w = &bytes.Buffer{}
-	err = tree2.WriteTo(w)
+	err = tree2.WriteBinary(w)
 	if err != nil {
 		panic(err)
 	}

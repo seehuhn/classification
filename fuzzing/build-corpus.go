@@ -17,7 +17,7 @@ func writeTree(t *classification.Tree) {
 	if err != nil {
 		panic(err)
 	}
-	err = t.WriteTo(fd)
+	err = t.WriteBinary(fd)
 	if err != nil {
 		panic(err)
 	}

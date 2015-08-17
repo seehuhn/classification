@@ -1,0 +1,4 @@
+panic: re-encoded tree differs from original
+github.com/seehuhn/classification.Fuzz
+github.com/dvyukov/go-fuzz/go-fuzz-dep.Main
+main.main
