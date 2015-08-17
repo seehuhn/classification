@@ -19,6 +19,6 @@ ctl <- rpart.control(
 	maxdepth=30
 )
 prm <- list(
-	split="information" # can be "gini" or "information"
+	split="gini" # can be "gini" or "information"
 )
-t <- rpart(digit~image, data, parms=prm, control=ctl)
+t <- rpart(digit~image, data, parms=prm) # control=ctl
