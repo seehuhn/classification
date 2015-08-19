@@ -6,4 +6,4 @@ To get the fuzzing framework::
 To run the fuzzing code::
 
     go-fuzz-build github.com/seehuhn/classification
-    go-fuzz -bin=./classification-fuzz.zip -workdir=fuzzing
+    go-fuzz -bin=./classification-fuzz.zip -workdir=.

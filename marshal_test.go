@@ -58,6 +58,14 @@ func (*Tests) TestMarshalling(c *C) {
 	c.Assert(tree2, DeepEquals, tree1)
 }
 
+func (*Tests) TestFuzzerCrash1(c *C) {
+	data := []byte("JVCT\x00\xb4\x99ѿ\x02\x01\x01\xd1\xea\xf6\x18\xfd?\x00d" +
+		"\x00")
+	tree := &Tree{}
+	err := tree.UnmarshalBinary(data)
+	c.Assert(err, Equals, ErrTreeEncoding)
+}
+
 // compile time check: Tree implements encoding.BinaryMarshaler
 var _ encoding.BinaryMarshaler = &Tree{}
 

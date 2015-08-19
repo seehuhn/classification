@@ -91,10 +91,17 @@ func (b *TreeBuilder) fullTree(x *matrix.Float64, classes int, response []int) *
 //
 // The return values are the new tree and an estimate for the average
 // value of the loss function (given by `b.XValLoss`).
-func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64, response []int) (*Tree, float64) {
+func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
+	response []int) (*Tree, float64) {
 	b.setDefaults()
 
-	n := len(response)
+	n, p := x.Shape()
+	if p > maxColumns {
+		panic("too large p")
+	}
+	if len(response) != n {
+		panic("dimensions of x and response don't match")
+	}
 
 	alphaSteps := 50
 	alpha := make([]float64, alphaSteps)

@@ -24,6 +24,10 @@ import (
 	"strings"
 )
 
+// To prevent excessive memory use, the number of columns is limited
+// to p <= 10000.
+const maxColumns = 10000
+
 // Tree is the data type to represent nodes of a classification tree.
 type Tree struct {
 	// Hist gives the frequencies of the different reponses in the

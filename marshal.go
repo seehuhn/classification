@@ -172,7 +172,7 @@ func TreeFromFile(r io.Reader) (*Tree, error) {
 	if err != nil {
 		return nil, err
 	}
-	if pTmp < 1 || pTmp >= 1<<31 {
+	if pTmp < 1 || pTmp > maxColumns {
 		return nil, ErrTreeEncoding
 	}
 	p := int(pTmp)
@@ -208,7 +208,7 @@ func readBinaryTree(buf *bufio.Reader, p int) (*Tree, error) {
 		if err != nil {
 			return nil, err
 		}
-		if tmp >= 1<<31 {
+		if tmp >= uint64(p) {
 			return nil, ErrTreeEncoding
 		}
 		t.Column = int(tmp)
