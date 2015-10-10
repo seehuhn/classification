@@ -1,3 +1,19 @@
+// grow.go - functions to grow a classification tree from data
+// Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package classification
 
 import (
@@ -25,11 +41,10 @@ type TreeBuilder struct {
 	// total `SplitScore`.  The default is to use Gini impurity here.
 	SplitScore impurity.Function
 
-	// PruneScore is the cost function used for cost-complexity
-	// pruning.  Pruning aims to reduce the size of the tree (in order
-	// to avoid overfitting), while keeping the `PruneScore` small.
-	// The default is to use the misclassification error rate for
-	// pruning.
+	// PruneScore is the impurity function ("cost") used for
+	// cost-complexity pruning.  Pruning aims to reduce the size
+	// ("complexity") of the tree, while keeping the `PruneScore`
+	// small.  The default is to use the misclassification error rate.
 	PruneScore impurity.Function
 
 	// XValLoss is used to guide the balance between the cost (as
@@ -100,15 +115,10 @@ func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
 		panic("too large p")
 	}
 	if len(response) != n {
-		panic("dimensions of x and response don't match")
+		panic("dimensions of `x` and `response` don't match")
 	}
 
-	alphaSteps := 50
-	alpha := make([]float64, alphaSteps)
-	alpha[0] = -1 // ask tryTrees to determine the range of alpha
-
-	mean := make([]float64, len(alpha))
-
+	tune := &tuneProfile{}
 	for k := 0; k < b.K; k++ {
 		learnRows, testRows := getXValSets(k, b.K, n)
 
@@ -116,49 +126,35 @@ func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
 		learnHist := util.GetHist(learnRows, classes, response)
 		xb := &xBuilder{*b, x, classes, response}
 		tree := xb.getFullTree(learnRows, learnHist)
-		b.initialPrune(tree)
 
 		// get all candidates for pruning the tree
-		candidates := b.prunedTrees(tree, classes)
+		b.initialPrune(tree)
+		candidates := b.getCandidates(tree, classes)
+		breaks, candidates := b.filterCandidates(candidates)
 
-		// get the optimally pruned tree for every alpha
-		trees := b.tryTrees(candidates, alpha)
-
-		cache := make(map[*Tree]float64)
-		for l, tree := range trees {
-			var cumLoss float64
-			if loss, ok := cache[tree]; ok {
-				cumLoss = loss
-			} else {
-				for _, row := range testRows {
-					prob := tree.EstimateClassProbabilities(x.Row(row))
-					val := b.XValLoss(response[row], prob)
-					cumLoss += val
-				}
-				cache[tree] = cumLoss
+		// assess all candidates using the test set
+		losses := make([]float64, len(candidates))
+		for i, tree := range candidates {
+			cumLoss := 0.0
+			for _, row := range testRows {
+				prob := tree.EstimateClassProbabilities(x.Row(row))
+				val := b.XValLoss(response[row], prob)
+				cumLoss += val
 			}
-			mean[l] += cumLoss
+			losses[i] = cumLoss
 		}
-	}
-	for l := range alpha {
-		mean[l] /= float64(n)
+		tune.Add(breaks, losses)
 	}
 
-	var bestAlpha float64
-	var bestExpectedLoss float64
-	for l, a := range alpha {
-		if l == 0 || mean[l] < bestExpectedLoss {
-			bestAlpha = a
-			bestExpectedLoss = mean[l]
-		}
-	}
+	// generate the optimal tree
+	bestAlpha, bestExpectedLoss := tune.Minimum()
 
 	tree := b.fullTree(x, classes, response)
 	b.initialPrune(tree)
-	candidates := b.prunedTrees(tree, classes)
-	tree = b.tryTrees(candidates, []float64{bestAlpha})[0]
+	candidates := b.getCandidates(tree, classes)
+	tree = b.selectCandidate(candidates, bestAlpha)
 
-	return tree, bestExpectedLoss
+	return tree, bestExpectedLoss / float64(len(response))
 }
 
 type xBuilder struct {

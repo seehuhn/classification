@@ -25,7 +25,7 @@ import (
 )
 
 // To prevent excessive memory use, the number of columns is limited
-// to p <= 10000.
+// to p <= maxColumns.
 const maxColumns = 10000
 
 // Tree is the data type to represent nodes of a classification tree.
@@ -54,16 +54,14 @@ type Tree struct {
 }
 
 func (t *Tree) doFormat(indent int) []string {
-	pfx := strings.Repeat("  ", indent)
+	pfx := strings.Repeat("    ", indent)
 	res := []string{}
-	res = append(res, pfx+fmt.Sprintf("%v", t.Hist))
-	if t.LeftChild != nil {
+	res = append(res, pfx+fmt.Sprintf("# %v", t.Hist))
+	if !t.IsLeaf() {
 		res = append(res, pfx+fmt.Sprintf("if x[%d] <= %g:", t.Column, t.Limit))
 		res = append(res, t.LeftChild.doFormat(indent+1)...)
 		res = append(res, pfx+"else:")
 		res = append(res, t.RightChild.doFormat(indent+1)...)
-	} else {
-		// res = append(res, pfx+fmt.Sprintf("%v", t.Hist))
 	}
 
 	return res
@@ -117,7 +115,8 @@ func (t *Tree) lookup(x []float64) *Tree {
 	}
 }
 
-// GetClassCounts returns the estimated class probabilities for input `x`.
+// GetClassCounts returns the class counts for input `x`, as seen in
+// the trainings data.
 func (t *Tree) GetClassCounts(x []float64) util.Histogram {
 	return t.lookup(x).Hist
 }
@@ -128,8 +127,7 @@ func (t *Tree) EstimateClassProbabilities(x []float64) []float64 {
 	return t.lookup(x).Hist.Probabilities()
 }
 
-// GuessClass returns tries to guess the class corresponding to input
-// `x`.
+// GuessClass tries to guess the class corresponding to input `x`.
 func (t *Tree) GuessClass(x []float64) int {
 	hist := t.lookup(x).Hist
 	bestClass := -1

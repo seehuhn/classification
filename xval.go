@@ -1,4 +1,4 @@
-// xval.go -
+// xval.go - functions relating to cross-validation
 // Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
 //
 // This program is free software: you can redistribute it and/or modify

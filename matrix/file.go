@@ -135,7 +135,7 @@ func (s *tokenizer) Scan() bool {
 		case IntColumn:
 			x, err := strconv.ParseFloat(token, 64)
 			if err != nil {
-				// TODO(voss): who to return an error to the caller here?
+				// TODO(voss): how to return an error to the caller here?
 				panic(err)
 			}
 			s.intRow = append(s.intRow, int(x))

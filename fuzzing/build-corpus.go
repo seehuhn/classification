@@ -11,7 +11,7 @@ import (
 var fileIndex int
 
 func writeTree(t *classification.Tree) {
-	fileIndex += 1
+	fileIndex++
 	fname := filepath.Join("corpus", fmt.Sprintf("simple%02d.bin", fileIndex))
 	fd, err := os.Create(fname)
 	if err != nil {

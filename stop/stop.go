@@ -4,8 +4,8 @@ import (
 	"github.com/seehuhn/classification/util"
 )
 
-// A stop.Function is used to decide when to stop splitting branches
-// of a classification tree, when the tree is originally constructed
+// A Function is used to decide when to stop splitting branches of a
+// classification tree, when the tree is originally constructed
 // (i.e. before pruning).  The default stop function keeps adding
 // branches until only one node is left.
 type Function func(util.Histogram) bool

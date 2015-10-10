@@ -32,6 +32,10 @@ import (
 // the output value should double, too.
 type Function func(util.Histogram) float64
 
+// Gini implements the Gini impurity function, i.e. the sum of
+// pi*(1-pi) over all classes, where pi is the proportion of class i
+// in the sample.  The returned value is the total sample size times
+// the Gini function value.
 func Gini(freq util.Histogram) float64 {
 	var res float64
 	n := float64(freq.Sum())
@@ -43,6 +47,8 @@ func Gini(freq util.Histogram) float64 {
 	return res
 }
 
+// Entropy returns the entropy of the sample, multiplied with the
+// total samples size.
 func Entropy(freq util.Histogram) float64 {
 	var res float64
 	n := float64(freq.Sum())
@@ -57,6 +63,8 @@ func Entropy(freq util.Histogram) float64 {
 	return res
 }
 
+// MisclassificationError returns the number of mis-classified values
+// in the sample.
 func MisclassificationError(freq util.Histogram) float64 {
 	n := 0
 	max := 0

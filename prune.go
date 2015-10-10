@@ -26,9 +26,9 @@ func (b *TreeBuilder) initialPrune(tree *Tree) (float64, int, int) {
 	return thisScore, totalNodes, leftPruned + rightPruned
 }
 
-func (b *TreeBuilder) prunedTrees(tree *Tree, classes int) []*Tree {
+func (b *TreeBuilder) getCandidates(tree *Tree, classes int) []*Tree {
 	candidates := []*Tree{tree}
-	for tree.LeftChild != nil {
+	for !tree.IsLeaf() {
 		ctx := &pruneCtx{
 			lowestPenalty: math.Inf(1),
 			pruneScore:    b.PruneScore,
@@ -73,6 +73,7 @@ func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) (float64, int) {
 	fullScore := leftFullScore + rightFullScore
 	fullSize := leftSize + rightSize
 
+	// TODO(voss): is this right?
 	penalty := (collapsedScore - fullScore) / float64(fullSize-1)
 	if penalty < ctx.lowestPenalty {
 		ctx.lowestPenalty = penalty
@@ -132,10 +133,7 @@ func (t *Tree) costComplexityScore(score impurity.Function) (loss float64, leave
 	return
 }
 
-func (b *TreeBuilder) tryTrees(candidates []*Tree, alpha []float64) []*Tree {
-	// get expected loss and complexity
-	// TODO(voss): ctx.findWeakestLink, above, already computes the expected
-	// loss; reuse these values rather than computing them again?
+func (b *TreeBuilder) filterCandidates(candidates []*Tree) ([]float64, []*Tree) {
 	m := len(candidates)
 	loss := make([]float64, m)
 	complexity := make([]int, m)
@@ -143,51 +141,49 @@ func (b *TreeBuilder) tryTrees(candidates []*Tree, alpha []float64) []*Tree {
 		loss[i], complexity[i] = tree.costComplexityScore(b.PruneScore)
 	}
 
+	breaks := []float64{}
+	trees := []*Tree{}
+
 	// Loss is increasing, complexity is decreasing.  We are looking
 	// for the i which minimises loss[i] + alpha*complexity[i].
 	// We find:
 	//
-	//   i is favoured over i+1
-	//     <=> loss[i] + alpha*complexity[i] < loss[i+1] + alpha*complexity[i+1]
-	//     <=> alpha*(complexity[i]-complexity[i+1]) < loss[i+1]-loss[i]
-	//     <=> alpha < (loss[i+1]-loss[i]) / (complexity[i]-complexity[i+1])
-	if alpha[0] < 0 {
-		var alphaMin float64
-		i := 0
-		// TODO(voss): this is a hack!
-		for alphaMin < 1e-6 {
-			alphaMin = 0.8 * (loss[i+1] - loss[i]) /
-				float64(complexity[i]-complexity[i+1])
-			i++
-		}
-		alphaMax := 1.2 * (loss[m-1] - loss[m-2]) /
-			float64(complexity[m-2]-complexity[m-1])
-		alphaSteps := len(alpha)
-		step := math.Pow(alphaMax/alphaMin, 1/float64(alphaSteps-1))
-		a := alphaMin
-		for i := range alpha {
-			alpha[i] = a
-			a *= step
-		}
-	}
-
-	// get the "optimal" pruned tree
-	bestScore := make([]float64, len(alpha))
-	for i := range bestScore {
-		bestScore[i] = math.Inf(1)
-	}
-	bestTree := make([]*Tree, len(alpha))
-	bestIdx := make([]int, len(alpha))
-	for i, a := range alpha {
-		for j, tree := range candidates {
-			score := loss[j] + a*float64(complexity[j])
-			if score < bestScore[i] {
-				bestScore[i] = score
-				bestTree[i] = tree
-				bestIdx[i] = j
+	//   i is favoured over j
+	//     <=> loss[i] + alpha*complexity[i] < loss[j] + alpha*complexity[j]
+	//     <=> alpha*(complexity[i]-complexity[j]) < loss[j]-loss[i]
+	//     <=> alpha < (loss[j]-loss[i]) / (complexity[i]-complexity[j])
+	i := 0
+	for i < m {
+		bestJ := m
+		bestStop := math.Inf(+1)
+		bestVal := math.Inf(+1)
+		for j := i + 1; j < m && loss[j] < bestVal; j++ {
+			stop := (loss[j] - loss[i]) / float64(complexity[i]-complexity[j])
+			if stop <= bestStop {
+				bestJ = j
+				bestStop = stop
+				bestVal = loss[i] + stop*float64(complexity[i])
 			}
 		}
+		if bestJ < m {
+			breaks = append(breaks, bestStop)
+		}
+		trees = append(trees, candidates[i])
+		i = bestJ
 	}
+	return breaks, trees
+}
 
+func (b *TreeBuilder) selectCandidate(candidates []*Tree, alpha float64) *Tree {
+	bestPenalty := math.Inf(+1)
+	var bestTree *Tree
+	for _, tree := range candidates {
+		loss, complexity := tree.costComplexityScore(b.PruneScore)
+		penalty := loss + alpha*float64(complexity)
+		if penalty <= bestPenalty {
+			bestPenalty = penalty
+			bestTree = tree
+		}
+	}
 	return bestTree
 }

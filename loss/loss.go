@@ -21,7 +21,7 @@ import (
 	"math"
 )
 
-// A loss.Function computes the "loss" if the model estimates the
+// A Function computes the "loss" if the model estimates the
 // class probabilities to be `prob` when the correct answer is `y`.
 // The result should be 0.0 if `prob[y] == 1.0`, and positive
 // otherwise.
@@ -33,9 +33,10 @@ func Deviance(y int, prob []float64) float64 {
 	return -2 * math.Log(prob[y])
 }
 
-// The ZeroOne loss function assumes that the model predicts the class
-// with the highest probability in `prob`, and then returns 0.0 if the
-// prediction is correct and 1.0 if the prediction is wrong.
+// ZeroOne is a loss function which assumes that the model predicts
+// the class with the highest probability in `prob`, and then returns
+// 0.0 if the prediction is correct and 1.0 if the prediction is
+// wrong.
 //
 // In case of a draw, where k entries of `prob` have the same, maximal
 // value, (k-1)/k is returned if y is one of these indices, and 1.0
@@ -52,7 +53,7 @@ func ZeroOne(y int, prob []float64) float64 {
 	count := 0
 	for j, p := range prob {
 		if p > max-1e-6 {
-			count += 1
+			count++
 			if y == j {
 				hit = 1
 			}
