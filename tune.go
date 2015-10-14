@@ -48,7 +48,7 @@ func (p *tuneProfile) Minimum() (pos, val float64) {
 	} else if bestI >= len(p.breaks) {
 		return math.Inf(+1), bestVal
 	} else {
-		return (p.breaks[bestI-1] + p.breaks[bestI]) / 2.0, bestVal
+		return math.Sqrt(p.breaks[bestI-1] * p.breaks[bestI]), bestVal
 	}
 }
 

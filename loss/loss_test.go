@@ -24,7 +24,6 @@ import (
 var all = []Function{
 	Deviance,
 	ZeroOne,
-	Other,
 }
 
 func TestLoss(t *testing.T) {

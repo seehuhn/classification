@@ -62,8 +62,3 @@ func ZeroOne(y int, prob []float64) float64 {
 
 	return 1.0 - float64(hit)/float64(count)
 }
-
-func Other(y int, prob []float64) float64 {
-	q := 1 - prob[y]
-	return q * q
-}

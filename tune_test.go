@@ -67,7 +67,7 @@ func (*Tests) TestTuneProfileMinimum(c *C) {
 		values: []float64{5.0, 6.0, 7.0},
 	}
 	pos, val := p.Minimum()
-	c.Check(pos, ApprixmatelyEquals, 0.0)
+	c.Check(pos, Equals, 0.0)
 	c.Check(val, ApprixmatelyEquals, 5.0)
 
 	// inside
@@ -76,7 +76,7 @@ func (*Tests) TestTuneProfileMinimum(c *C) {
 		values: []float64{5.0, 4.0, 7.0},
 	}
 	pos, val = p.Minimum()
-	c.Check(pos, ApprixmatelyEquals, 1.5)
+	c.Check(pos, ApprixmatelyEquals, math.Sqrt(1.0*2.0))
 	c.Check(val, ApprixmatelyEquals, 4.0)
 
 	// right

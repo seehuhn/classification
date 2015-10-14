@@ -23,10 +23,7 @@ func TestReadTokenize(t *testing.T) {
 		r := strings.NewReader(data.in)
 		scanner := bufio.NewScanner(r)
 		tokenizer := &tokenizer{
-			TextFormat: TextFormat{
-				RowSep:   '\n',
-				FieldSep: ' ',
-			},
+			TextFormat: Plain,
 		}
 		scanner.Split(tokenizer.splitField)
 		pos := 0
@@ -80,7 +77,7 @@ func TestReadRow(t *testing.T) {
 		r := strings.NewReader(data.in)
 		scanner := newTokenizer(r,
 			func(int) ColumnType { return Float64Column },
-			TextFormat{'\n', ','})
+			CSV)
 		pos := 0
 		for scanner.Scan() {
 			row, _ := scanner.Row()

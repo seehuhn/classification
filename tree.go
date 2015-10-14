@@ -72,6 +72,8 @@ func (t *Tree) Format() string {
 	return strings.Join(t.doFormat(0), "\n")
 }
 
+// String returns a one-line summary description of the tree.  Use the
+// `Format` method to get a textual representation of the full tree.
 func (t *Tree) String() string {
 	nodes := 0
 	maxDepth := 0
@@ -81,8 +83,8 @@ func (t *Tree) String() string {
 		}
 		nodes++
 	})
-	return fmt.Sprintf("<classification tree, %d leaves, max depth %d>",
-		nodes, maxDepth)
+	tmpl := "<classification tree, %d leaves, max depth %d, representing %d samples>"
+	return fmt.Sprintf(tmpl, nodes, maxDepth, t.Hist.Sum())
 }
 
 // Classes returns the number of classes of the response variable

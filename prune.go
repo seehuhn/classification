@@ -8,29 +8,32 @@ import (
 
 const epsilon = 1e-6
 
-// initialPrune modifies the given tree by recursively pruning all
-// leaves where the PruneScore is not increased by the pruning.
-func (b *TreeBuilder) initialPrune(tree *Tree) (float64, int, int) {
+// The initialPrune method modifies the given tree by recursively
+// collapsing all leaves where the impurity `b.PruneScore` is not
+// increased in the process.  The return value is the total impurity
+// value of the pruned tree.
+func (b *TreeBuilder) initialPrune(tree *Tree) float64 {
 	thisScore := b.PruneScore(tree.Hist)
 	if tree.IsLeaf() {
-		return thisScore, 1, 0
+		return thisScore
 	}
-	leftScore, leftNodes, leftPruned := b.initialPrune(tree.LeftChild)
-	rightScore, rightNodes, rightPruned := b.initialPrune(tree.RightChild)
-	totalNodes := leftNodes + rightNodes + 1
+	leftScore := b.initialPrune(tree.LeftChild)
+	rightScore := b.initialPrune(tree.RightChild)
 	if thisScore < leftScore+rightScore+epsilon {
+		// collapse this node
 		tree.LeftChild = nil
 		tree.RightChild = nil
-		return thisScore, totalNodes, leftNodes + rightNodes
+	} else {
+		thisScore = leftScore + rightScore
 	}
-	return thisScore, totalNodes, leftPruned + rightPruned
+	return thisScore
 }
 
 func (b *TreeBuilder) getCandidates(tree *Tree, classes int) []*Tree {
 	candidates := []*Tree{tree}
 	for !tree.IsLeaf() {
 		ctx := &pruneCtx{
-			lowestPenalty: math.Inf(1),
+			lowestPenalty: math.Inf(+1),
 			pruneScore:    b.PruneScore,
 		}
 		ctx.findWeakestLink(tree, nil)
@@ -60,34 +63,35 @@ type pruneCtx struct {
 // When called from the outside, the `path` argument must be nil (it
 // is used internally in recursive calls).
 //
-// The method returns the total score and number of leaves of the
+// The method returns the total impurity and number of leaves of the
 // subtree `t`.
 func (ctx *pruneCtx) findWeakestLink(t *Tree, path []direction) (float64, int) {
-	collapsedScore := ctx.pruneScore(t.Hist)
+	collapsedImpurity := ctx.pruneScore(t.Hist)
 	if t.IsLeaf() {
-		return collapsedScore, 1
+		return collapsedImpurity, 1
 	}
 
-	leftFullScore, leftSize := ctx.findWeakestLink(t.LeftChild, append(path, left))
-	rightFullScore, rightSize := ctx.findWeakestLink(t.RightChild, append(path, right))
-	fullScore := leftFullScore + rightFullScore
-	fullSize := leftSize + rightSize
+	leftImpurity, leftLeaves :=
+		ctx.findWeakestLink(t.LeftChild, append(path, left))
+	rightImpurity, rightLeaves :=
+		ctx.findWeakestLink(t.RightChild, append(path, right))
+	fullImpurity := leftImpurity + rightImpurity
+	allLeaves := leftLeaves + rightLeaves
 
-	// TODO(voss): is this right?
-	penalty := (collapsedScore - fullScore) / float64(fullSize-1)
-	if penalty < ctx.lowestPenalty {
+	penalty := (collapsedImpurity - fullImpurity) / float64(allLeaves-1)
+	if penalty <= ctx.lowestPenalty {
 		ctx.lowestPenalty = penalty
 		ctx.bestPath = make([]direction, len(path))
 		copy(ctx.bestPath, path)
 	}
 
-	return fullScore, fullSize
+	return fullImpurity, allLeaves
 }
 
-// The collapseSubtree function returns a new tree with the subtree rooted at
-// a given node collapsed into a single leaf node.  Internal nodes are
-// copied as needed to ensure that the original tree is not modified
-// by this procedure.
+// The collapseSubtree function returns a new tree with the subtree
+// rooted at a given node collapsed into a single leaf node.  Internal
+// nodes are copied as needed to ensure that the original tree is not
+// modified by this procedure.
 func collapseSubtree(tree *Tree, path []direction) *Tree {
 	n := len(path)
 	spine := make([]*Tree, n)

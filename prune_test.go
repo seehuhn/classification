@@ -6,6 +6,50 @@ import (
 	"math"
 )
 
+func (*Tests) TestInitialPrune(c *C) {
+	tree1 := &Tree{
+		Hist: []int{6, 8},
+		LeftChild: &Tree{
+			Hist: []int{3, 6},
+			LeftChild: &Tree{
+				Hist: []int{1, 2},
+			},
+			RightChild: &Tree{
+				Hist: []int{2, 4},
+			},
+		},
+		RightChild: &Tree{
+			Hist: []int{3, 2},
+			LeftChild: &Tree{
+				Hist: []int{1, 1},
+			},
+			RightChild: &Tree{
+				Hist: []int{2, 1},
+			},
+		},
+	}
+	b := &TreeBuilder{
+		PruneScore: impurity.Gini,
+	}
+	b.initialPrune(tree1)
+	tree2 := &Tree{
+		Hist: []int{6, 8},
+		LeftChild: &Tree{
+			Hist: []int{3, 6},
+		},
+		RightChild: &Tree{
+			Hist: []int{3, 2},
+			LeftChild: &Tree{
+				Hist: []int{1, 1},
+			},
+			RightChild: &Tree{
+				Hist: []int{2, 1},
+			},
+		},
+	}
+	c.Assert(tree1, DeepEquals, tree2)
+}
+
 func (*Tests) TestWeakestLink(c *C) {
 	tree := &Tree{
 		Hist: []int{24, 45},

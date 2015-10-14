@@ -16,8 +16,14 @@
 
 package util
 
+// Histogram is the type used to represent class counts in a sample.
 type Histogram []int
 
+// GetHist counts how many instances of each class are seen in the
+// given rows of the response data: `rows` specifies which entries of
+// `y` to consider, `classes` gives the total number of possible
+// classes, `y` gives the observed classes.  The result is a Histogram
+// of the class counts.
 func GetHist(rows []int, classes int, y []int) Histogram {
 	hist := make([]int, classes)
 	for _, row := range rows {
@@ -26,18 +32,22 @@ func GetHist(rows []int, classes int, y []int) Histogram {
 	return hist
 }
 
-func (freq Histogram) Sum() int {
+// Sum returns the total number of samples corresponding to the
+// histogram, obtained by adding up all entries of `hist`.
+func (hist Histogram) Sum() int {
 	res := 0
-	for _, ni := range freq {
+	for _, ni := range hist {
 		res += ni
 	}
 	return res
 }
 
-func (freq Histogram) Probabilities() []float64 {
-	prob := make([]float64, len(freq))
-	n := freq.Sum()
-	for i, ni := range freq {
+// Probabilities returns an estimate of the class probabilities,
+// obtained by normalising the entries of the histogram.
+func (hist Histogram) Probabilities() []float64 {
+	prob := make([]float64, len(hist))
+	n := hist.Sum()
+	for i, ni := range hist {
 		prob[i] = float64(ni) / float64(n)
 	}
 	return prob

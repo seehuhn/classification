@@ -33,7 +33,7 @@ func (t *Tree) MarshalBinary() ([]byte, error) {
 }
 
 // WriteBinary encodes the tree `t` into a binary form and writes the
-// result to `r`.  The output of this function can be decoded using
+// result to `w`.  The output of this function can be decoded using
 // the `TreeFromFile` function.
 func (t *Tree) WriteBinary(w io.Writer) error {
 	buf := bufio.NewWriter(w)

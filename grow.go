@@ -132,7 +132,7 @@ func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
 		candidates := b.getCandidates(tree, classes)
 		breaks, candidates := b.filterCandidates(candidates)
 
-		// assess all candidates using the test set
+		// for each candidate, assess the expected loss using the test set
 		losses := make([]float64, len(candidates))
 		for i, tree := range candidates {
 			cumLoss := 0.0
@@ -143,6 +143,7 @@ func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
 			}
 			losses[i] = cumLoss
 		}
+
 		tune.Add(breaks, losses)
 	}
 
@@ -164,7 +165,7 @@ type xBuilder struct {
 	response []int
 }
 
-// plan to reduce the amount of sorting required
+// potential plan to reduce the amount of sorting required
 //
 // 1. sort rows by col j: i0, i1, i2, ..., in only once
 // 2. split rows: i0, ..., ik | i{k+1}, ..., in as before
@@ -174,6 +175,7 @@ type xBuilder struct {
 //      sorted into two groups.
 
 func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
+	// TODO(voss): use a multi-threaded algorithm?
 	if b.StopGrowth(hist) {
 		return &Tree{
 			Hist: hist,
@@ -192,8 +194,6 @@ func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
 }
 
 func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult {
-	// TODO(voss): notice if the split does not bring any improvement
-	// and, in this case, do not split any further?
 	best := &searchResult{}
 	first := true
 	_, p := b.x.Shape()

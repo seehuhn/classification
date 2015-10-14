@@ -1,4 +1,4 @@
-// matrix.go -
+// matrix.go - matrices for continuous and categorical data
 // Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -27,35 +27,104 @@ import (
 	"strings"
 )
 
+// ErrSyntax is returned by the `TextFormat.Read` method when the
+// input file is malformed.
 var ErrSyntax = errors.New("malformed input data")
 
+// TextFormat describes the file format for a textual representation
+// of a matrix.
 type TextFormat struct {
-	RowSep   byte
+	// RowSep specifies the character which separates matrix rows in
+	// the input.  Normally this will be '\n', so that matrix rows
+	// correspond to lines in the input file.
+	RowSep byte
+
+	// FieldSep specifies the character which separates matrix
+	// elements within a row.
 	FieldSep byte
 }
 
-var CSVFormat = TextFormat{
+// CSV describes the file format for .csv files (comma-separated
+// values).
+var CSV = &TextFormat{
 	RowSep:   '\n',
 	FieldSep: ',',
 }
 
-var PlainFormat = TextFormat{
+// Plain describes the file format where matrix entries within a row
+// are separated by spaces, and matrix rows correspond to rows in the
+// text file.
+var Plain = &TextFormat{
 	RowSep:   '\n',
 	FieldSep: ' ',
 }
 
+func (opts *TextFormat) Read(fname string, cols ColumnFunc) (*Float64, *Int, error) {
+	file, err := os.Open(fname)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer file.Close()
+
+	var in io.Reader
+	if strings.HasSuffix(fname, ".gz") {
+		gin, err := gzip.NewReader(file)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer gin.Close()
+		in = gin
+	} else {
+		in = file
+	}
+
+	n := 0
+	pFloat64 := 0
+	pInt := 0
+	float64Data := []float64{}
+	intData := []int{}
+	scanner := newTokenizer(in, cols, opts)
+	for scanner.Scan() {
+		float64Row, intRow := scanner.Row()
+		if n == 0 {
+			pFloat64 = len(float64Row)
+			pInt = len(intRow)
+		} else if len(float64Row) != pFloat64 || len(intRow) != pInt {
+			return nil, nil, ErrSyntax
+		}
+		float64Data = append(float64Data, float64Row...)
+		intData = append(intData, intRow...)
+		n++
+	}
+
+	return NewFloat64(n, pFloat64, 0, float64Data), NewInt(n, pInt, 0, intData), nil
+}
+
+// ColumnType is used by `matrix.ColumnFunc` to specify the role of
+// individual columns in the input file.
 type ColumnType int
 
 const (
+	// Float64Column indicates columns for continuous inputs,
+	// represented by `float64` values in the program.
 	Float64Column ColumnType = iota
+
+	// IntColumn indicates columns for categorical inputs, represented
+	// by `int` values in the program.
 	IntColumn
+
+	// IgnoredColumn indicates columns in the input file which should
+	// be ignored.
 	IgnoredColumn
 )
 
+// ColumnFunc is the type of functions used to determine the type of
+// each column.  The argument of the ColumnFunc is the column index,
+// starting with `0` for the first column.
 type ColumnFunc func(int) ColumnType
 
 type tokenizer struct {
-	TextFormat
+	*TextFormat
 	scanner     *bufio.Scanner
 	atEOL       bool
 	lineStarted bool
@@ -65,7 +134,7 @@ type tokenizer struct {
 	intRow     []int
 }
 
-func newTokenizer(r io.Reader, cols ColumnFunc, opts TextFormat) *tokenizer {
+func newTokenizer(r io.Reader, cols ColumnFunc, opts *TextFormat) *tokenizer {
 	res := &tokenizer{
 		scanner:    bufio.NewScanner(r),
 		TextFormat: opts,
@@ -146,45 +215,4 @@ func (s *tokenizer) Scan() bool {
 
 func (s *tokenizer) Row() ([]float64, []int) {
 	return s.float64Row, s.intRow
-}
-
-func ReadAsText(fname string, cols ColumnFunc, opts TextFormat) (*Float64, *Int, error) {
-	file, err := os.Open(fname)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer file.Close()
-
-	var in io.Reader
-	if strings.HasSuffix(fname, ".gz") {
-		gin, err := gzip.NewReader(file)
-		if err != nil {
-			return nil, nil, err
-		}
-		defer gin.Close()
-		in = gin
-	} else {
-		in = file
-	}
-
-	n := 0
-	pFloat64 := 0
-	pInt := 0
-	float64Data := []float64{}
-	intData := []int{}
-	scanner := newTokenizer(in, cols, opts)
-	for scanner.Scan() {
-		float64Row, intRow := scanner.Row()
-		if n == 0 {
-			pFloat64 = len(float64Row)
-			pInt = len(intRow)
-		} else if len(float64Row) != pFloat64 || len(intRow) != pInt {
-			return nil, nil, ErrSyntax
-		}
-		float64Data = append(float64Data, float64Row...)
-		intData = append(intData, intRow...)
-		n++
-	}
-
-	return NewFloat64(n, pFloat64, 0, float64Data), NewInt(n, pInt, 0, intData), nil
 }

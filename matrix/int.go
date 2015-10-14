@@ -22,11 +22,21 @@ import (
 	"strings"
 )
 
+// Int represents matrices of categorical (int) values.  New Int
+// matrices can be allocated using the `NewInt` function.
 type Int struct {
 	n, p, stride int
 	data         []int
 }
 
+// NewInt allocates a new matrix for categorical (int) values.
+// `n` is the number of rows and `p` is the number of columns.  Date
+// is stored so that values within one row are consecutive; if
+// `stride` is non-zero, each row is followed by `stride-p` unused
+// values in memory.  If `data` is non-nil, it is used to store the
+// matrix values, values in `data` are preserved and form the initial
+// contents of the matrix; otherwise a new slice is allocated for
+// storage and all matrix elements are initially `0`.
 func NewInt(n, p, stride int, data []int) *Int {
 	if data == nil {
 		data = make([]int, n*p)
@@ -44,18 +54,33 @@ func NewInt(n, p, stride int, data []int) *Int {
 	}
 }
 
+// Shape returns the number of rows and column of `mat`.
+func (mat *Int) Shape() (int, int) {
+	return mat.n, mat.p
+}
+
+// At returns the matrix element at row `i`, column `j`.
 func (mat *Int) At(i, j int) int {
 	return mat.data[i*mat.stride+j]
 }
 
+// Row returns a slice representing row `i` of the matrix.  The
+// returned slice is a sub-slice of the matrix data, and any changes
+// to elements of the returned row slice are visible in the underlying
+// matrix, too.
 func (mat *Int) Row(i int) []int {
 	base := i * mat.stride
 	return mat.data[base : base+mat.p]
 }
 
+// Column returns column `j` of the data.  If `mat` has stride 1, the
+// returned slice is a sub-slice of the matrix data, and any changes
+// to elements of the returned row slice are visible in the underlying
+// matrix, too.  Otherwise, the returned slice is a copy of the matrix
+// data, and can be changed without changing the original matrix.
 func (mat *Int) Column(j int) []int {
 	if mat.stride == 1 {
-		return mat.data
+		return mat.data[:mat.n]
 	}
 	res := make([]int, mat.n)
 	for i := 0; i < mat.n; i++ {
@@ -64,6 +89,9 @@ func (mat *Int) Column(j int) []int {
 	return res
 }
 
+// Format returns a textual, human-readable representation of the
+// matrix.  `format` is the format string used for each matrix
+// element.
 func (mat *Int) Format(format string) string {
 	entries := [][]string{}
 	for i := 0; i < mat.n; i++ {
@@ -106,10 +134,14 @@ func (mat *Int) Format(format string) string {
 	return strings.Join(rows, "\n")
 }
 
+// String returns a textual, human-readable representation of the
+// matrix.
 func (mat *Int) String() string {
 	return mat.Format("%6d")
 }
 
+// WriteCSV writes the matrix in .csv form into the file with name
+// `fname`.  Any pre-existing file with this name is over-written.
 func (mat *Int) WriteCSV(fname string) {
 	fd, err := os.Create(fname)
 	if err != nil {

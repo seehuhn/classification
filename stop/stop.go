@@ -11,14 +11,18 @@ import (
 type Function func(util.Histogram) bool
 
 // TODO(voss): use different naming conventions for stop functions and
-// factories.
+// stop function factories.
 
+// IfAtMost returns a stop.Function which stops splitting nodes once
+// the current node has `n` or fewer samples associated to it.
 func IfAtMost(n int) Function {
 	return func(freq util.Histogram) bool {
 		return freq.Sum() <= n
 	}
 }
 
+// IfHomogeneous is a stop.Function which stops splitting nodes once
+// all samples in the current node have the same class.
 func IfHomogeneous(hist util.Histogram) bool {
 	k := 0
 	for _, ni := range hist {

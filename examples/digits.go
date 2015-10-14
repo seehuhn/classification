@@ -36,15 +36,13 @@ func main() {
 	}
 
 	trainFile := "zip.train.gz"
-	XTrain, YTrain, err := matrix.ReadAsText(trainFile,
-		zipDataColumns, matrix.PlainFormat)
+	XTrain, YTrain, err := matrix.Plain.Read(trainFile, zipDataColumns)
 	if err != nil {
 		fmt.Printf("cannot read %s: %s\n", trainFile, err.Error())
 	}
 
 	testFile := "zip.test.gz"
-	XTest, YTest, err := matrix.ReadAsText(testFile,
-		zipDataColumns, matrix.PlainFormat)
+	XTest, YTest, err := matrix.Plain.Read(testFile, zipDataColumns)
 	if err != nil {
 		fmt.Printf("cannot read %s: %s\n", testFile, err.Error())
 	}
@@ -52,6 +50,7 @@ func main() {
 	b := &classification.TreeBuilder{
 		XValLoss:   loss.ZeroOne,
 		SplitScore: impurity.Entropy,
+		PruneScore: impurity.Entropy,
 		K:          2,
 	}
 	tree, est := b.TreeFromTrainingsData(10, XTrain, YTrain.Column(0))
