@@ -31,6 +31,10 @@ func (b *TreeBuilder) initialPrune(tree *Tree) float64 {
 
 func (b *TreeBuilder) getCandidates(tree *Tree, classes int) []*Tree {
 	candidates := []*Tree{tree}
+	// TODO(voss): the repeated calls to findWeakestLink compute the
+	// many link strengths repeatedly.  Is it worth the effort to
+	// cache the (and update on the path toward the root when
+	// pruining) results?
 	for !tree.IsLeaf() {
 		ctx := &pruneCtx{
 			lowestPenalty: math.Inf(+1),

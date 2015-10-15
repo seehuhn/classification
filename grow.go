@@ -58,19 +58,24 @@ type TreeBuilder struct {
 	K int
 }
 
+// CART specifies the parameters for constructin a tree as suggested
+// in the book "Classification and Regression Trees" by Breiman et
+// al. (Chapman & Hall CRC, 1984).
+var CART = &TreeBuilder{
+	StopGrowth: stop.IfPureOrAtMost(10),
+	SplitScore: impurity.Gini,
+	PruneScore: impurity.MisclassificationError,
+	XValLoss:   loss.ZeroOne,
+	K:          10, // p.75
+}
+
 // DefaultTreeBuilder specifies the default parameters for
 // constructing a tree; see the `TreeBuilder` documentation for the
 // meaning of the individual fields.  The values given in
 // `DefaultTreeBuilder` are used by the `TreeFromTrainingsData`
 // function, and to replace zero values in a `TreeBuilder` structure
 // when the `TreeBuilder.TreeFromTrainingsData` method is called.
-var DefaultTreeBuilder = &TreeBuilder{
-	StopGrowth: stop.IfHomogeneous,
-	SplitScore: impurity.Gini,
-	PruneScore: impurity.MisclassificationError,
-	XValLoss:   loss.ZeroOne,
-	K:          5,
-}
+var DefaultTreeBuilder = CART
 
 func (b *TreeBuilder) setDefaults() {
 	if b.XValLoss == nil {

@@ -49,9 +49,9 @@ func main() {
 
 	b := &classification.TreeBuilder{
 		XValLoss:   loss.ZeroOne,
-		SplitScore: impurity.Entropy,
-		PruneScore: impurity.Entropy,
-		K:          2,
+		SplitScore: impurity.Gini,
+		PruneScore: impurity.MisclassificationError,
+		K:          5,
 	}
 	tree, est := b.TreeFromTrainingsData(10, XTrain, YTrain.Column(0))
 	fmt.Println(tree)
