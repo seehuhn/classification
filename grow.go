@@ -22,6 +22,7 @@ import (
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/stop"
 	"github.com/seehuhn/classification/util"
+	"math"
 	"sort"
 )
 
@@ -123,7 +124,11 @@ func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
 		panic("dimensions of `x` and `response` don't match")
 	}
 
-	tune := &tuneProfile{}
+	// generate the full tree
+	tree := b.fullTree(x, classes, response)
+	candidates, alpha := b.getCandidates(tree, classes)
+	loss := make([]float64, len(candidates))
+
 	for k := 0; k < b.K; k++ {
 		learnRows, testRows := getXValSets(k, b.K, n)
 
@@ -133,34 +138,40 @@ func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
 		tree := xb.getFullTree(learnRows, learnHist)
 
 		// get all candidates for pruning the tree
-		b.initialPrune(tree)
-		candidates := b.getCandidates(tree, classes)
-		breaks, candidates := b.filterCandidates(candidates)
+		XVcandidates, XValpha := b.getCandidates(tree, classes)
 
-		// for each candidate, assess the expected loss using the test set
-		losses := make([]float64, len(candidates))
-		for i, tree := range candidates {
-			cumLoss := 0.0
-			for _, row := range testRows {
-				prob := tree.EstimateClassProbabilities(x.Row(row))
-				val := b.XValLoss(response[row], prob)
-				cumLoss += val
+		// for each alpha, assess the expected loss using the test set
+		XVloss := make([]float64, len(XVcandidates))
+		XVlossDone := make([]bool, len(XVcandidates))
+		for j := range candidates {
+			a := math.Sqrt(alpha[j] * alpha[j+1])
+			i := selectCandidate(XValpha, a)
+			if !XVlossDone[i] {
+				tree := XVcandidates[i]
+				cumLoss := 0.0
+				for _, row := range testRows {
+					prob := tree.EstimateClassProbabilities(x.Row(row))
+					val := b.XValLoss(response[row], prob)
+					cumLoss += val
+				}
+				XVloss[i] = cumLoss
+				XVlossDone[i] = true
 			}
-			losses[i] = cumLoss
+			loss[j] += XVloss[i]
 		}
-
-		tune.Add(breaks, losses)
 	}
 
-	// generate the optimal tree
-	bestAlpha, bestExpectedLoss := tune.Minimum()
+	// find the optimal tree
+	bestIdx := 0
+	bestLoss := math.Inf(+1)
+	for j := range candidates {
+		if loss[j] <= bestLoss {
+			bestIdx = j
+			bestLoss = loss[j]
+		}
+	}
 
-	tree := b.fullTree(x, classes, response)
-	b.initialPrune(tree)
-	candidates := b.getCandidates(tree, classes)
-	tree = b.selectCandidate(candidates, bestAlpha)
-
-	return tree, bestExpectedLoss / float64(len(response))
+	return candidates[bestIdx], bestLoss / float64(len(response))
 }
 
 type xBuilder struct {

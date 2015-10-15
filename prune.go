@@ -2,7 +2,6 @@ package classification
 
 import (
 	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/util"
 	"math"
 )
 
@@ -29,12 +28,16 @@ func (b *TreeBuilder) initialPrune(tree *Tree) float64 {
 	return thisScore
 }
 
-func (b *TreeBuilder) getCandidates(tree *Tree, classes int) []*Tree {
+// getCandidates returns the candidate trees for pruning, and the
+// corresponding critical values for the tuning parameter alpha.
+func (b *TreeBuilder) getCandidates(tree *Tree, classes int) ([]*Tree, []float64) {
+	// TODO(voss): the repeated calls to findWeakestLink compute many
+	// link strengths repeatedly.  Is it worth the effort to cache the
+	// results (and update along the path toward the root when
+	// pruning)?
+	b.initialPrune(tree)
 	candidates := []*Tree{tree}
-	// TODO(voss): the repeated calls to findWeakestLink compute the
-	// many link strengths repeatedly.  Is it worth the effort to
-	// cache the (and update on the path toward the root when
-	// pruining) results?
+	alpha := []float64{0.0}
 	for !tree.IsLeaf() {
 		ctx := &pruneCtx{
 			lowestPenalty: math.Inf(+1),
@@ -42,9 +45,16 @@ func (b *TreeBuilder) getCandidates(tree *Tree, classes int) []*Tree {
 		}
 		ctx.findWeakestLink(tree, nil)
 		tree = collapseSubtree(tree, ctx.bestPath)
-		candidates = append(candidates, tree)
+		k := len(candidates)
+		if ctx.lowestPenalty > alpha[k-1] {
+			candidates = append(candidates, tree)
+			alpha = append(alpha, ctx.lowestPenalty)
+		} else {
+			candidates[k-1] = tree
+		}
 	}
-	return candidates
+	alpha = append(alpha, math.Inf(+1))
+	return candidates, alpha
 }
 
 type direction uint8
@@ -133,65 +143,11 @@ func collapseSubtree(tree *Tree, path []direction) *Tree {
 	return res
 }
 
-func (t *Tree) costComplexityScore(score impurity.Function) (loss float64, leaves int) {
-	t.ForeachLeaf(func(hist util.Histogram, _ int) {
-		leaves++
-		loss += score(hist)
-	})
-	return
-}
-
-func (b *TreeBuilder) filterCandidates(candidates []*Tree) ([]float64, []*Tree) {
-	m := len(candidates)
-	loss := make([]float64, m)
-	complexity := make([]int, m)
-	for i, tree := range candidates {
-		loss[i], complexity[i] = tree.costComplexityScore(b.PruneScore)
-	}
-
-	breaks := []float64{}
-	trees := []*Tree{}
-
-	// Loss is increasing, complexity is decreasing.  We are looking
-	// for the i which minimises loss[i] + alpha*complexity[i].
-	// We find:
-	//
-	//   i is favoured over j
-	//     <=> loss[i] + alpha*complexity[i] < loss[j] + alpha*complexity[j]
-	//     <=> alpha*(complexity[i]-complexity[j]) < loss[j]-loss[i]
-	//     <=> alpha < (loss[j]-loss[i]) / (complexity[i]-complexity[j])
-	i := 0
-	for i < m {
-		bestJ := m
-		bestStop := math.Inf(+1)
-		bestVal := math.Inf(+1)
-		for j := i + 1; j < m && loss[j] < bestVal; j++ {
-			stop := (loss[j] - loss[i]) / float64(complexity[i]-complexity[j])
-			if stop <= bestStop {
-				bestJ = j
-				bestStop = stop
-				bestVal = loss[i] + stop*float64(complexity[i])
-			}
-		}
-		if bestJ < m {
-			breaks = append(breaks, bestStop)
-		}
-		trees = append(trees, candidates[i])
-		i = bestJ
-	}
-	return breaks, trees
-}
-
-func (b *TreeBuilder) selectCandidate(candidates []*Tree, alpha float64) *Tree {
-	bestPenalty := math.Inf(+1)
-	var bestTree *Tree
-	for _, tree := range candidates {
-		loss, complexity := tree.costComplexityScore(b.PruneScore)
-		penalty := loss + alpha*float64(complexity)
-		if penalty <= bestPenalty {
-			bestPenalty = penalty
-			bestTree = tree
+func selectCandidate(alpha []float64, a float64) int {
+	for i := 0; i < len(alpha)-1; i++ {
+		if alpha[i+1] >= a {
+			return i
 		}
 	}
-	return bestTree
+	panic("alpha not terminated by +inf")
 }

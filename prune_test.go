@@ -131,3 +131,11 @@ func (*Tests) TestCollapse(c *C) {
 	c.Check(tree4.LeftChild, IsNil)
 	c.Check(tree4.RightChild, IsNil)
 }
+
+func (*Tests) TestSelectCandidate(c *C) {
+	alpha := []float64{0.0, 1.0, math.Inf(+1)}
+	c.Check(selectCandidate(alpha, 0.0), Equals, 0)
+	c.Check(selectCandidate(alpha, 0.5), Equals, 0)
+	c.Check(selectCandidate(alpha, 2.0), Equals, 1)
+	c.Check(selectCandidate(alpha, math.Inf(+1)), Equals, 1)
+}
