@@ -1,4 +1,4 @@
-package classification
+package tree
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ func (*Tests) TestBinaryFormat(c *C) {
 	w := &bytes.Buffer{}
 	tree1.WriteBinary(w)
 	r := bytes.NewReader(w.Bytes())
-	tree2, err := TreeFromFile(r)
+	tree2, err := FromFile(r)
 	c.Assert(err, Equals, nil)
 
 	c.Check(tree1, DeepEquals, tree2)

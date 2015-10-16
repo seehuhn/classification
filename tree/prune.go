@@ -1,4 +1,4 @@
-package classification
+package tree
 
 import (
 	"github.com/seehuhn/classification/impurity"
@@ -11,7 +11,7 @@ const epsilon = 1e-6
 // collapsing all leaves where the impurity `b.PruneScore` is not
 // increased in the process.  The return value is the total impurity
 // value of the pruned tree.
-func (b *TreeBuilder) initialPrune(tree *Tree) float64 {
+func (b *Builder) initialPrune(tree *Tree) float64 {
 	thisScore := b.PruneScore(tree.Hist)
 	if tree.IsLeaf() {
 		return thisScore
@@ -30,7 +30,7 @@ func (b *TreeBuilder) initialPrune(tree *Tree) float64 {
 
 // getCandidates returns the candidate trees for pruning, and the
 // corresponding critical values for the tuning parameter alpha.
-func (b *TreeBuilder) getCandidates(tree *Tree, classes int) ([]*Tree, []float64) {
+func (b *Builder) getCandidates(tree *Tree, classes int) ([]*Tree, []float64) {
 	// TODO(voss): the repeated calls to findWeakestLink compute many
 	// link strengths repeatedly.  Is it worth the effort to cache the
 	// results (and update along the path toward the root when

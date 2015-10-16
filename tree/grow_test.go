@@ -1,4 +1,4 @@
-package classification
+package tree
 
 import (
 	"github.com/seehuhn/classification/impurity"
@@ -20,7 +20,7 @@ func (*Tests) TestFindBestSplit1(c *C) {
 	data := matrix.NewFloat64(n, 1, 0, raw)
 
 	b := &xBuilder{
-		TreeBuilder: TreeBuilder{
+		Builder: Builder{
 			SplitScore: impurity.Gini,
 		},
 		x:        data,
@@ -64,7 +64,7 @@ func (*Tests) TestFindBestSplit2(c *C) {
 	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
 	b := &xBuilder{
-		TreeBuilder: TreeBuilder{
+		Builder: Builder{
 			SplitScore: impurity.Gini,
 		},
 		x:        data,
@@ -107,7 +107,7 @@ func (*Tests) TestFindBestSplit3(c *C) {
 	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
 	b := &xBuilder{
-		TreeBuilder: TreeBuilder{
+		Builder: Builder{
 			SplitScore: impurity.Gini,
 		},
 		x:        data,

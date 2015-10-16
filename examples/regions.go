@@ -5,8 +5,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/tree"
 	"github.com/seehuhn/classification/util"
 	"github.com/seehuhn/mt19937"
 	"math/rand"
@@ -17,7 +17,7 @@ import (
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
-func fixHist(t *classification.Tree) {
+func fixHist(t *tree.Tree) {
 	if !t.IsLeaf() {
 		fixHist(t.LeftChild)
 		fixHist(t.RightChild)
@@ -42,127 +42,127 @@ func main() {
 	// 5 6 7 8
 	// 9 0 1 2
 	// 3 4 5 10
-	model := &classification.Tree{
+	model := &tree.Tree{
 		Column: 0,
 		Limit:  0.5,
-		LeftChild: &classification.Tree{
+		LeftChild: &tree.Tree{
 			Column: 0,
 			Limit:  0.25,
-			LeftChild: &classification.Tree{
+			LeftChild: &tree.Tree{
 				// column 0
 				Column: 1,
 				Limit:  0.5,
-				LeftChild: &classification.Tree{
+				LeftChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.25,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (0, 0)
 						Hist: []int{3, 7},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (0, 1)
 						Hist: []int{9, 1},
 					},
 				},
-				RightChild: &classification.Tree{
+				RightChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.75,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (0, 2)
 						Hist: []int{5, 5},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (0, 3)
 						Hist: []int{1, 9},
 					},
 				},
 			},
-			RightChild: &classification.Tree{
+			RightChild: &tree.Tree{
 				// column 1
 				Column: 1,
 				Limit:  0.5,
-				LeftChild: &classification.Tree{
+				LeftChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.25,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (1, 0)
 						Hist: []int{4, 6},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (1, 1)
 						Hist: []int{0, 10},
 					},
 				},
-				RightChild: &classification.Tree{
+				RightChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.75,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (1, 2)
 						Hist: []int{6, 4},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (1, 3)
 						Hist: []int{2, 8},
 					},
 				},
 			},
 		},
-		RightChild: &classification.Tree{
+		RightChild: &tree.Tree{
 			Column: 0,
 			Limit:  0.75,
-			LeftChild: &classification.Tree{
+			LeftChild: &tree.Tree{
 				// column 2
 				Column: 1,
 				Limit:  0.5,
-				LeftChild: &classification.Tree{
+				LeftChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.25,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (2, 0)
 						Hist: []int{5, 5},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (2, 1)
 						Hist: []int{1, 9},
 					},
 				},
-				RightChild: &classification.Tree{
+				RightChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.75,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (2, 2)
 						Hist: []int{7, 3},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (2, 3)
 						Hist: []int{3, 7},
 					},
 				},
 			},
-			RightChild: &classification.Tree{
+			RightChild: &tree.Tree{
 				// column 3
 				Column: 1,
 				Limit:  0.5,
-				LeftChild: &classification.Tree{
+				LeftChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.25,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (3, 0)
 						Hist: []int{10, 0},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (3, 1)
 						Hist: []int{2, 8},
 					},
 				},
-				RightChild: &classification.Tree{
+				RightChild: &tree.Tree{
 					Column: 1,
 					Limit:  0.75,
-					LeftChild: &classification.Tree{
+					LeftChild: &tree.Tree{
 						// (3, 2)
 						Hist: []int{8, 2},
 					},
-					RightChild: &classification.Tree{
+					RightChild: &tree.Tree{
 						// (3, 3)
 						Hist: []int{4, 6},
 					},
@@ -194,7 +194,7 @@ func main() {
 	}
 	x := matrix.NewFloat64(n, p, 0, raw)
 
-	tree, estLoss := classification.TreeFromTrainingsData(2, x, y)
+	tree, estLoss := tree.NewFromTrainingsData(2, x, y)
 	fmt.Println(estLoss)
 	tree.ForeachLeafRegion(func(a, b []float64, hist util.Histogram, depth int) {
 		fmt.Println(a[0], b[0], a[1], b[1], hist.Probabilities())

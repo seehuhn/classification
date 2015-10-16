@@ -1,6 +1,6 @@
 // +build gofuzz
 
-package classification
+package tree
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 
 func Fuzz(data []byte) int {
 	r := bytes.NewReader(data)
-	tree, err := TreeFromFile(r)
+	tree, err := FromFile(r)
 	if err != nil {
 		if tree != nil {
 			panic("tree is not nil")
@@ -24,7 +24,7 @@ func Fuzz(data []byte) int {
 	data2 := w.Bytes()
 
 	r = bytes.NewReader(data2)
-	tree2, err := TreeFromFile(r)
+	tree2, err := FromFile(r)
 	if err != nil {
 		panic(err)
 	}

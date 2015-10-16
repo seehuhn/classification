@@ -20,9 +20,9 @@ package main
 
 import (
 	"flag"
-	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/tree"
 	"github.com/seehuhn/mt19937"
 	"log"
 	"math/rand"
@@ -66,10 +66,10 @@ func main() {
 	}
 	x := matrix.NewFloat64(n, 1, 0, raw)
 
-	builder := &classification.TreeBuilder{
+	builder := &tree.Builder{
 		PruneScore: impurity.Gini,
 	}
-	builder.TreeFromTrainingsData(2, x, response)
+	builder.NewFromTrainingsData(2, x, response)
 	// tree, estLoss := builder.TreeFromTrainingsData(2, x, response)
 
 	// tree.ForeachLeafRegion(1, func(a, b []float64, hist util.Histogram) {
@@ -92,7 +92,7 @@ func main() {
 	// for j := 0; j < N; j++ {
 	//	xj, yj := sample()
 	//	pj := tree.Lookup([]float64{xj})
-	//	l := classification.DefaultTreeBuilder.XValLoss(yj, pj)
+	//	l := classification.DefaultBuilder.XValLoss(yj, pj)
 	//	lVal += l
 	//	lSquaredVal += l * l
 	// }

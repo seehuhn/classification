@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package classification
+package tree
 
 import (
 	"fmt"
@@ -87,14 +87,14 @@ func (t *Tree) String() string {
 	return fmt.Sprintf(tmpl, nodes, maxDepth, t.Hist.Sum())
 }
 
-// Classes returns the number of classes of the response variable
-// corresponding to the tree `t`.
-func (t *Tree) Classes() int {
+// NumClasses returns the number of classes of the response variable
+// for the tree `t`.
+func (t *Tree) NumClasses() int {
 	p := len(t.Hist)
 	if p > 0 {
 		return p
 	}
-	return t.LeftChild.Classes()
+	return t.LeftChild.NumClasses()
 }
 
 // IsLeaf returns true if `t` is a terminal node and returns false if
@@ -178,7 +178,7 @@ func (t *Tree) foreachLeafRecursive(depth int, fn func(util.Histogram, int)) {
 // in the tree.
 func (t *Tree) ForeachLeafRegion(
 	fn func(a, b []float64, hist util.Histogram, depth int)) {
-	p := t.Classes()
+	p := t.NumClasses()
 	a := make([]float64, p)
 	b := make([]float64, p)
 	for i := 0; i < p; i++ {
@@ -207,9 +207,9 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 	}
 }
 
-// TreeFromTrainingsData constructs a new classification tree from a
+// NewFromTrainingsData constructs a new classification tree from a
 // sample of trainings data.  The function uses the settings from
-// `DefaultTreeBuilder`.
+// `DefaultBuilder`.
 //
 // The argument `classes` gives the number of classes in the response
 // variable.  The rows of the matrix `x` are the observations from the
@@ -218,7 +218,7 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 //
 // The return values are the new tree and a cross-validated estimate
 // for the average value of the loss function (given by
-// `DefaultTreeBuilder.XValLoss`).
-func TreeFromTrainingsData(classes int, x *matrix.Float64, response []int) (*Tree, float64) {
-	return DefaultTreeBuilder.TreeFromTrainingsData(classes, x, response)
+// `DefaultBuilder.XValLoss`).
+func NewFromTrainingsData(classes int, x *matrix.Float64, response []int) (*Tree, float64) {
+	return DefaultBuilder.NewFromTrainingsData(classes, x, response)
 }

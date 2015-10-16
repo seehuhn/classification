@@ -1,4 +1,4 @@
-package classification
+package tree
 
 func intRange(n int) []int {
 	res := make([]int, n)

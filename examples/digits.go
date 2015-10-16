@@ -5,10 +5,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/tree"
 	"os"
 	"runtime/pprof"
 )
@@ -47,13 +47,13 @@ func main() {
 		fmt.Printf("cannot read %s: %s\n", testFile, err.Error())
 	}
 
-	b := &classification.TreeBuilder{
+	b := &tree.Builder{
 		XValLoss:   loss.ZeroOne,
 		SplitScore: impurity.Gini,
 		PruneScore: impurity.MisclassificationError,
 		K:          5,
 	}
-	tree, est := b.TreeFromTrainingsData(10, XTrain, YTrain.Column(0))
+	tree, est := b.NewFromTrainingsData(10, XTrain, YTrain.Column(0))
 	fmt.Println(tree)
 	fmt.Println("estimated average loss from cross validation", est)
 

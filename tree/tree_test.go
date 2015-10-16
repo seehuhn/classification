@@ -1,4 +1,4 @@
-package classification
+package tree
 
 import (
 	. "gopkg.in/check.v1"
@@ -18,5 +18,5 @@ func (*Tests) TestClasses(c *C) {
 			Hist: []int{0, 0, 1},
 		},
 	}
-	c.Check(tree.Classes(), Equals, 3)
+	c.Check(tree.NumClasses(), Equals, 3)
 }

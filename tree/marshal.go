@@ -1,4 +1,4 @@
-package classification
+package tree
 
 import (
 	"bufio"
@@ -34,7 +34,7 @@ func (t *Tree) MarshalBinary() ([]byte, error) {
 
 // WriteBinary encodes the tree `t` into a binary form and writes the
 // result to `w`.  The output of this function can be decoded using
-// the `TreeFromFile` function.
+// the `FromFile` function.
 func (t *Tree) WriteBinary(w io.Writer) error {
 	buf := bufio.NewWriter(w)
 
@@ -51,7 +51,7 @@ func (t *Tree) WriteBinary(w io.Writer) error {
 	}
 
 	// 3: number of response classes
-	p := t.Classes()
+	p := t.NumClasses()
 	err = appendUvarint(buf, uint64(p))
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func appendUvarint(buf *bufio.Writer, x uint64) error {
 // implements the `encoding.BinaryUnmarshaler` interface.
 func (t *Tree) UnmarshalBinary(data []byte) error {
 	r := bytes.NewReader(data)
-	tt, err := TreeFromFile(r)
+	tt, err := FromFile(r)
 	if err != nil {
 		return err
 	}
@@ -138,14 +138,14 @@ func (t *Tree) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-// TreeFromFile reads a binary representation of a tree from `r` and
+// FromFile reads a binary representation of a tree from `r` and
 // returns the corrsponding tree.  The binary data must be generated
 // using a call to the `WriteBinary` method.
 //
 // The function returns `ErrTreeEncoding` if the data read from `r` is
 // invalid, and `ErrTreeVersion` if the data was generated using an
 // incompatible (i.e. newer) version of the classification library.
-func TreeFromFile(r io.Reader) (*Tree, error) {
+func FromFile(r io.Reader) (*Tree, error) {
 	buf := bufio.NewReader(r)
 
 	// 1: tag

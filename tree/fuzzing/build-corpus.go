@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/seehuhn/classification"
+	"github.com/seehuhn/classification/tree"
 	"math"
 	"os"
 	"path/filepath"
@@ -10,7 +10,7 @@ import (
 
 var fileIndex int
 
-func writeTree(t *classification.Tree) {
+func writeTree(t *tree.Tree) {
 	fileIndex++
 	fname := filepath.Join("corpus", fmt.Sprintf("simple%02d.bin", fileIndex))
 	fd, err := os.Create(fname)
@@ -26,19 +26,19 @@ func writeTree(t *classification.Tree) {
 
 func main() {
 	for p := 1; p < 600; p *= 2 {
-		t := &classification.Tree{
+		t := &tree.Tree{
 			Hist: make([]int, p),
 		}
 		t.Hist[p/2] = p
 		writeTree(t)
 	}
 	for p := 1; p < 600; p *= 2 {
-		t := &classification.Tree{
+		t := &tree.Tree{
 			Hist: make([]int, p),
-			LeftChild: &classification.Tree{
+			LeftChild: &tree.Tree{
 				Hist: make([]int, p),
 			},
-			RightChild: &classification.Tree{
+			RightChild: &tree.Tree{
 				Hist: make([]int, p),
 			},
 			Column: p / 2,

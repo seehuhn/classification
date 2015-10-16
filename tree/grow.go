@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package classification
+package tree
 
 import (
 	"github.com/seehuhn/classification/impurity"
@@ -26,11 +26,11 @@ import (
 	"sort"
 )
 
-// TreeBuilder is a structure to store the parameters governing the
+// Builder is a structure to store the parameters governing the
 // growing and pruning of classification trees.  Any zero field values
 // are interpreted as the corresponding values from the
-// `DefaultTreeBuilder` structure.
-type TreeBuilder struct {
+// `DefaultBuilder` structure.
+type Builder struct {
 	// StopGrowth decides for every node of the initial tree whether a
 	// further split is considered.  The default is to stop splitting
 	// nodes once the node only contains a single type of
@@ -62,7 +62,7 @@ type TreeBuilder struct {
 // CART specifies the parameters for constructin a tree as suggested
 // in the book "Classification and Regression Trees" by Breiman et
 // al. (Chapman & Hall CRC, 1984).
-var CART = &TreeBuilder{
+var CART = &Builder{
 	StopGrowth: stop.IfPureOrAtMost(10),
 	SplitScore: impurity.Gini,
 	PruneScore: impurity.MisclassificationError,
@@ -70,33 +70,33 @@ var CART = &TreeBuilder{
 	K:          10, // p.75
 }
 
-// DefaultTreeBuilder specifies the default parameters for
-// constructing a tree; see the `TreeBuilder` documentation for the
+// DefaultBuilder specifies the default parameters for
+// constructing a tree; see the `Builder` documentation for the
 // meaning of the individual fields.  The values given in
-// `DefaultTreeBuilder` are used by the `TreeFromTrainingsData`
-// function, and to replace zero values in a `TreeBuilder` structure
-// when the `TreeBuilder.TreeFromTrainingsData` method is called.
-var DefaultTreeBuilder = CART
+// `DefaultBuilder` are used by the `NewFromTrainingsData`
+// function, and to replace zero values in a `Builder` structure
+// when the `Builder.NewFromTrainingsData` method is called.
+var DefaultBuilder = CART
 
-func (b *TreeBuilder) setDefaults() {
+func (b *Builder) setDefaults() {
 	if b.XValLoss == nil {
-		b.XValLoss = DefaultTreeBuilder.XValLoss
+		b.XValLoss = DefaultBuilder.XValLoss
 	}
 	if b.K == 0 {
-		b.K = DefaultTreeBuilder.K
+		b.K = DefaultBuilder.K
 	}
 	if b.StopGrowth == nil {
-		b.StopGrowth = DefaultTreeBuilder.StopGrowth
+		b.StopGrowth = DefaultBuilder.StopGrowth
 	}
 	if b.SplitScore == nil {
-		b.SplitScore = DefaultTreeBuilder.SplitScore
+		b.SplitScore = DefaultBuilder.SplitScore
 	}
 	if b.PruneScore == nil {
-		b.PruneScore = DefaultTreeBuilder.PruneScore
+		b.PruneScore = DefaultBuilder.PruneScore
 	}
 }
 
-func (b *TreeBuilder) fullTree(x *matrix.Float64, classes int, response []int) *Tree {
+func (b *Builder) fullTree(x *matrix.Float64, classes int, response []int) *Tree {
 	b.setDefaults()
 	rows := intRange(len(response))
 	hist := util.GetHist(rows, classes, response)
@@ -104,7 +104,7 @@ func (b *TreeBuilder) fullTree(x *matrix.Float64, classes int, response []int) *
 	return xb.getFullTree(rows, hist)
 }
 
-// TreeFromTrainingsData constructs a new classification tree from
+// NewFromTrainingsData constructs a new classification tree from
 // trainings data.
 //
 // K-fold crossvalidation is used to find the optimal pruning
@@ -112,7 +112,7 @@ func (b *TreeBuilder) fullTree(x *matrix.Float64, classes int, response []int) *
 //
 // The return values are the new tree and an estimate for the average
 // value of the loss function (given by `b.XValLoss`).
-func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
+func (b *Builder) NewFromTrainingsData(classes int, x *matrix.Float64,
 	response []int) (*Tree, float64) {
 	b.setDefaults()
 
@@ -175,7 +175,7 @@ func (b *TreeBuilder) TreeFromTrainingsData(classes int, x *matrix.Float64,
 }
 
 type xBuilder struct {
-	TreeBuilder
+	Builder
 	x        *matrix.Float64
 	classes  int
 	response []int

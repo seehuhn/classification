@@ -1,4 +1,4 @@
-package classification
+package tree
 
 import (
 	"github.com/seehuhn/classification/impurity"
@@ -28,7 +28,7 @@ func (*Tests) TestInitialPrune(c *C) {
 			},
 		},
 	}
-	b := &TreeBuilder{
+	b := &Builder{
 		PruneScore: impurity.Gini,
 	}
 	b.initialPrune(tree1)

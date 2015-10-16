@@ -21,10 +21,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/tree"
 	"github.com/seehuhn/classification/util"
 	"github.com/seehuhn/mt19937"
 	"log"
@@ -64,8 +64,8 @@ func main() {
 	}
 	x := matrix.NewFloat64(n, p, 0, raw)
 
-	b := &classification.TreeBuilder{
-		XValLoss: loss.Other,
+	b := &tree.Builder{
+		XValLoss: loss.Deviance,
 		K:        5,
 
 		StopGrowth: func(hist util.Histogram) bool {
@@ -86,7 +86,7 @@ func main() {
 		PruneScore: impurity.MisclassificationError,
 	}
 
-	_, estLoss := b.TreeFromTrainingsData(classes, x, response)
+	_, estLoss := b.NewFromTrainingsData(classes, x, response)
 
 	fmt.Println(n, estLoss)
 }
