@@ -27,19 +27,19 @@ func writeTree(t *tree.Tree) {
 func main() {
 	for p := 1; p < 600; p *= 2 {
 		t := &tree.Tree{
-			Hist: make([]int, p),
+			Hist: make([]float64, p),
 		}
-		t.Hist[p/2] = p
+		t.Hist[p/2] = float64(p)
 		writeTree(t)
 	}
 	for p := 1; p < 600; p *= 2 {
 		t := &tree.Tree{
-			Hist: make([]int, p),
+			Hist: make([]float64, p),
 			LeftChild: &tree.Tree{
-				Hist: make([]int, p),
+				Hist: make([]float64, p),
 			},
 			RightChild: &tree.Tree{
-				Hist: make([]int, p),
+				Hist: make([]float64, p),
 			},
 			Column: p / 2,
 			Limit:  math.Sin(float64(p)) * float64(p),

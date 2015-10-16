@@ -36,11 +36,11 @@ type Function func(util.Histogram) float64
 // pi*(1-pi) over all classes, where pi is the proportion of class i
 // in the sample.  The returned value is the total sample size times
 // the Gini function value.
-func Gini(freq util.Histogram) float64 {
+func Gini(hist util.Histogram) float64 {
 	var res float64
-	n := float64(freq.Sum())
-	for _, ni := range freq {
-		floatNi := float64(ni)
+	n := hist.Sum()
+	for _, ni := range hist {
+		floatNi := ni
 		pi := floatNi / n
 		res += floatNi * (1 - pi)
 	}
@@ -49,12 +49,12 @@ func Gini(freq util.Histogram) float64 {
 
 // Entropy returns the entropy of the sample, multiplied with the
 // total samples size.
-func Entropy(freq util.Histogram) float64 {
+func Entropy(hist util.Histogram) float64 {
 	var res float64
-	n := float64(freq.Sum())
-	for _, ni := range freq {
-		floatNi := float64(ni)
-		pi := floatNi / n
+	total := hist.Sum()
+	for _, ni := range hist {
+		floatNi := ni
+		pi := floatNi / total
 		if pi <= 1e-6 {
 			continue
 		}
@@ -65,14 +65,14 @@ func Entropy(freq util.Histogram) float64 {
 
 // MisclassificationError returns the number of mis-classified values
 // in the sample.
-func MisclassificationError(freq util.Histogram) float64 {
-	n := 0
-	max := 0
-	for _, ni := range freq {
-		n += ni
+func MisclassificationError(hist util.Histogram) float64 {
+	total := 0.0
+	max := 0.0
+	for _, ni := range hist {
+		total += ni
 		if ni > max {
 			max = ni
 		}
 	}
-	return float64(n - max)
+	return float64(total - max)
 }

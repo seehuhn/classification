@@ -70,7 +70,7 @@ func main() {
 
 		StopGrowth: func(hist util.Histogram) bool {
 			seen := 0
-			sum := 0
+			sum := 0.0
 			for _, ni := range hist {
 				sum += ni
 				if ni > 0 {
@@ -86,7 +86,7 @@ func main() {
 		PruneScore: impurity.MisclassificationError,
 	}
 
-	_, estLoss := b.NewFromTrainingsData(classes, x, response)
+	_, estLoss := b.NewFromTrainingsData(classes, x, response, nil)
 
 	fmt.Println(n, estLoss)
 }

@@ -15,7 +15,7 @@ type Function func(util.Histogram) bool
 
 // IfAtMost returns a stop.Function which stops splitting nodes once
 // the current node has `n` or fewer samples associated to it.
-func IfAtMost(n int) Function {
+func IfAtMost(n float64) Function {
 	return func(hist util.Histogram) bool {
 		return hist.Sum() <= n
 	}
@@ -39,16 +39,16 @@ func IfPure(hist util.Histogram) bool {
 // IfPureOrAtMost returns a stop.Function which stops splitting nodes
 // when either all samples in the current node have the same class, or
 // the node has `n` or fewer samples associated to it.
-func IfPureOrAtMost(n int) Function {
+func IfPureOrAtMost(n float64) Function {
 	return func(hist util.Histogram) bool {
-		count := 0
+		total := 0.0
 		k := 0
 		for _, ni := range hist {
-			count += ni
+			total += ni
 			if ni > 0 {
 				k++
 			}
-			if k > 1 && count > n {
+			if k > 1 && total > n {
 				return false
 			}
 		}

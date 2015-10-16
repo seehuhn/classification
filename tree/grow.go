@@ -96,10 +96,10 @@ func (b *Builder) setDefaults() {
 	}
 }
 
-func (b *Builder) fullTree(x *matrix.Float64, classes int, response []int) *Tree {
+func (b *Builder) fullTree(x *matrix.Float64, classes int, response []int, w []float64) *Tree {
 	b.setDefaults()
 	rows := intRange(len(response))
-	hist := util.GetHist(rows, classes, response)
+	hist := util.GetHist(rows, classes, response, w)
 	xb := &xBuilder{*b, x, classes, response}
 	return xb.getFullTree(rows, hist)
 }
@@ -113,7 +113,7 @@ func (b *Builder) fullTree(x *matrix.Float64, classes int, response []int) *Tree
 // The return values are the new tree and an estimate for the average
 // value of the loss function (given by `b.XValLoss`).
 func (b *Builder) NewFromTrainingsData(classes int, x *matrix.Float64,
-	response []int) (*Tree, float64) {
+	response []int, w []float64) (*Tree, float64) {
 	b.setDefaults()
 
 	n, p := x.Shape()
@@ -125,7 +125,7 @@ func (b *Builder) NewFromTrainingsData(classes int, x *matrix.Float64,
 	}
 
 	// generate the full tree
-	tree := b.fullTree(x, classes, response)
+	tree := b.fullTree(x, classes, response, w)
 	candidates, alpha := b.getCandidates(tree, classes)
 	loss := make([]float64, len(candidates))
 
@@ -133,7 +133,7 @@ func (b *Builder) NewFromTrainingsData(classes int, x *matrix.Float64,
 		learnRows, testRows := getXValSets(k, b.K, n)
 
 		// build the initial tree
-		learnHist := util.GetHist(learnRows, classes, response)
+		learnHist := util.GetHist(learnRows, classes, response, w)
 		xb := &xBuilder{*b, x, classes, response}
 		tree := xb.getFullTree(learnRows, learnHist)
 
@@ -218,7 +218,7 @@ func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult 
 		sort.Sort(&colSort{b.x, rows, col})
 
 		leftHist := make(util.Histogram, len(hist))
-		var rightHist = copyIntSlice(hist)
+		var rightHist = copyFloatSlice(hist)
 		for i := 1; i < len(rows); i++ {
 			yi := b.response[rows[i-1]]
 			leftHist[yi]++
@@ -240,8 +240,8 @@ func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult 
 				best.Limit = limit
 				best.Left = rows[:i]
 				best.Right = rows[i:]
-				best.LeftHist = copyIntSlice(leftHist)
-				best.RightHist = copyIntSlice(rightHist)
+				best.LeftHist = copyFloatSlice(leftHist)
+				best.RightHist = copyFloatSlice(rightHist)
 				best.Score = score
 				first = false
 			}

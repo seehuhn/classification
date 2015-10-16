@@ -83,7 +83,7 @@ func (t *Tree) String() string {
 		}
 		nodes++
 	})
-	tmpl := "<classification tree, %d leaves, max depth %d, representing %d samples>"
+	tmpl := "<classification tree, %d leaves, max depth %d, representing %g samples>"
 	return fmt.Sprintf(tmpl, nodes, maxDepth, t.Hist.Sum())
 }
 
@@ -133,7 +133,7 @@ func (t *Tree) EstimateClassProbabilities(x []float64) []float64 {
 func (t *Tree) GuessClass(x []float64) int {
 	hist := t.lookup(x).Hist
 	bestClass := -1
-	bestCount := -1
+	bestCount := -1.0
 	for class, count := range hist {
 		if count > bestCount {
 			bestCount = count
@@ -219,6 +219,6 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 // The return values are the new tree and a cross-validated estimate
 // for the average value of the loss function (given by
 // `DefaultBuilder.XValLoss`).
-func NewFromTrainingsData(classes int, x *matrix.Float64, response []int) (*Tree, float64) {
-	return DefaultBuilder.NewFromTrainingsData(classes, x, response)
+func NewFromTrainingsData(classes int, x *matrix.Float64, response []int, w []float64) (*Tree, float64) {
+	return DefaultBuilder.NewFromTrainingsData(classes, x, response, w)
 }

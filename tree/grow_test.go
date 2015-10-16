@@ -28,7 +28,7 @@ func (*Tests) TestFindBestSplit1(c *C) {
 		response: response,
 	}
 	rows := intRange(n)
-	total := make([]int, b.classes)
+	total := make([]float64, b.classes)
 	for _, row := range rows {
 		yi := response[row]
 		total[yi]++
@@ -72,7 +72,7 @@ func (*Tests) TestFindBestSplit2(c *C) {
 		response: response,
 	}
 	rows := intRange(n1 * n2)
-	total := make([]int, b.classes)
+	total := make([]float64, b.classes)
 	for _, row := range rows {
 		yi := response[row]
 		total[yi]++
@@ -115,7 +115,7 @@ func (*Tests) TestFindBestSplit3(c *C) {
 		response: response,
 	}
 	rows := intRange(n1 * n2)
-	total := make([]int, b.classes)
+	total := make([]float64, b.classes)
 	for _, row := range rows {
 		yi := response[row]
 		total[yi]++

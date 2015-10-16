@@ -10,17 +10,17 @@ func (*Tests) TestBinaryFormat(c *C) {
 	tree1 := &Tree{
 		LeftChild: &Tree{
 			LeftChild: &Tree{
-				Hist: []int{1, 0, 0},
+				Hist: []float64{1, 0, 0},
 			},
 			RightChild: &Tree{
-				Hist: []int{0, 1, 0},
+				Hist: []float64{0, 1, 0},
 			},
-			Hist: []int{1, 1, 0},
+			Hist: []float64{1, 1, 0},
 		},
 		RightChild: &Tree{
-			Hist: []int{0, 0, 1},
+			Hist: []float64{0, 0, 1},
 		},
-		Hist: []int{1, 1, 1},
+		Hist: []float64{1, 1, 1},
 	}
 
 	w := &bytes.Buffer{}
@@ -35,18 +35,18 @@ func (*Tests) TestBinaryFormat(c *C) {
 func (*Tests) TestMarshalling(c *C) {
 	tree1 := &Tree{
 		LeftChild: &Tree{
-			Hist: []int{0, 0, 10},
+			Hist: []float64{0, 0, 10},
 		},
 		RightChild: &Tree{
 			LeftChild: &Tree{
-				Hist: []int{1, 0, 0},
+				Hist: []float64{1, 0, 0},
 			},
 			RightChild: &Tree{
-				Hist: []int{0, 1, 2},
+				Hist: []float64{0, 1, 2},
 			},
-			Hist: []int{1, 1, 2},
+			Hist: []float64{1, 1, 2},
 		},
-		Hist: []int{1, 1, 12},
+		Hist: []float64{1, 1, 12},
 	}
 
 	data, err := tree1.MarshalBinary()
@@ -59,7 +59,7 @@ func (*Tests) TestMarshalling(c *C) {
 }
 
 func (*Tests) TestFuzzerCrash1(c *C) {
-	data := []byte("JVCT\x00\xb4\x99ѿ\x02\x01\x01\xd1\xea\xf6\x18\xfd?\x00d" +
+	data := []byte("JVCT\x01\xb4\x99ѿ\x02\x01\x01\xd1\xea\xf6\x18\xfd?\x00d" +
 		"\x00")
 	tree := &Tree{}
 	err := tree.UnmarshalBinary(data)

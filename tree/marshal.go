@@ -18,7 +18,7 @@ var ErrTreeEncoding = errors.New("cannot decode binary tree representation")
 var ErrTreeVersion = errors.New("unknown tree file format version")
 
 const binaryFormatTag = "JVCT"
-const binaryFormatVersion = 0
+const binaryFormatVersion = 1
 
 // MarshalBinary encodes the tree `t` into a binary form and returns
 // the result.  This method implements the `encoding.BinaryMarshaler`
@@ -76,7 +76,7 @@ func appendBinaryTree(buf *bufio.Writer, p int, t *Tree) error {
 
 		// 5: histogram counts
 		for i := 0; i < p; i++ {
-			err = appendUvarint(buf, uint64(t.Hist[i]))
+			err = binary.Write(buf, binary.LittleEndian, t.Hist[i])
 			if err != nil {
 				return err
 			}
@@ -163,7 +163,7 @@ func FromFile(r io.Reader) (*Tree, error) {
 	if err != nil {
 		return nil, err
 	}
-	if version != 0 {
+	if version != binaryFormatVersion {
 		return nil, ErrTreeVersion
 	}
 
@@ -193,14 +193,10 @@ func readBinaryTree(buf *bufio.Reader, p int) (*Tree, error) {
 		// 5: histogram counts
 		t.Hist = make(util.Histogram, p)
 		for i := 0; i < p; i++ {
-			tmp, err := binary.ReadUvarint(buf)
+			err = binary.Read(buf, binary.LittleEndian, &t.Hist[i])
 			if err != nil {
 				return nil, err
 			}
-			if tmp >= 1<<31 {
-				return nil, ErrTreeEncoding
-			}
-			t.Hist[i] = int(tmp)
 		}
 	} else if nodeType == 1 {
 		// 6: split column

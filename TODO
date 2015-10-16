@@ -1,5 +1,0 @@
-TODO
-----
-
-- change histograms to be []float64, in preparation for the
-  introduction of sample weights.

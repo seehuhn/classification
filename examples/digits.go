@@ -53,7 +53,7 @@ func main() {
 		PruneScore: impurity.MisclassificationError,
 		K:          5,
 	}
-	tree, est := b.NewFromTrainingsData(10, XTrain, YTrain.Column(0))
+	tree, est := b.NewFromTrainingsData(10, XTrain, YTrain.Column(0), nil)
 	fmt.Println(tree)
 	fmt.Println("estimated average loss from cross validation", est)
 

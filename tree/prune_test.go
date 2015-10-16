@@ -8,23 +8,23 @@ import (
 
 func (*Tests) TestInitialPrune(c *C) {
 	tree1 := &Tree{
-		Hist: []int{6, 8},
+		Hist: []float64{6, 8},
 		LeftChild: &Tree{
-			Hist: []int{3, 6},
+			Hist: []float64{3, 6},
 			LeftChild: &Tree{
-				Hist: []int{1, 2},
+				Hist: []float64{1, 2},
 			},
 			RightChild: &Tree{
-				Hist: []int{2, 4},
+				Hist: []float64{2, 4},
 			},
 		},
 		RightChild: &Tree{
-			Hist: []int{3, 2},
+			Hist: []float64{3, 2},
 			LeftChild: &Tree{
-				Hist: []int{1, 1},
+				Hist: []float64{1, 1},
 			},
 			RightChild: &Tree{
-				Hist: []int{2, 1},
+				Hist: []float64{2, 1},
 			},
 		},
 	}
@@ -33,17 +33,17 @@ func (*Tests) TestInitialPrune(c *C) {
 	}
 	b.initialPrune(tree1)
 	tree2 := &Tree{
-		Hist: []int{6, 8},
+		Hist: []float64{6, 8},
 		LeftChild: &Tree{
-			Hist: []int{3, 6},
+			Hist: []float64{3, 6},
 		},
 		RightChild: &Tree{
-			Hist: []int{3, 2},
+			Hist: []float64{3, 2},
 			LeftChild: &Tree{
-				Hist: []int{1, 1},
+				Hist: []float64{1, 1},
 			},
 			RightChild: &Tree{
-				Hist: []int{2, 1},
+				Hist: []float64{2, 1},
 			},
 		},
 	}
@@ -52,23 +52,23 @@ func (*Tests) TestInitialPrune(c *C) {
 
 func (*Tests) TestWeakestLink(c *C) {
 	tree := &Tree{
-		Hist: []int{24, 45},
+		Hist: []float64{24, 45},
 		LeftChild: &Tree{
-			Hist: []int{12, 23},
+			Hist: []float64{12, 23},
 			LeftChild: &Tree{
-				Hist: []int{4, 8},
+				Hist: []float64{4, 8},
 			},
 			RightChild: &Tree{
-				Hist: []int{8, 15},
+				Hist: []float64{8, 15},
 			},
 		},
 		RightChild: &Tree{
-			Hist: []int{12, 22},
+			Hist: []float64{12, 22},
 			LeftChild: &Tree{
-				Hist: []int{4, 8},
+				Hist: []float64{4, 8},
 			},
 			RightChild: &Tree{
-				Hist: []int{8, 14},
+				Hist: []float64{8, 14},
 			},
 		},
 	}
@@ -81,23 +81,23 @@ func (*Tests) TestWeakestLink(c *C) {
 
 	c.Assert(ctx.bestPath, DeepEquals, []direction{left})
 	found := ctx.lowestPenalty
-	expected := impurity.Gini([]int{12, 23}) -
-		impurity.Gini([]int{4, 8}) -
-		impurity.Gini([]int{8, 15})
+	expected := impurity.Gini([]float64{12, 23}) -
+		impurity.Gini([]float64{4, 8}) -
+		impurity.Gini([]float64{8, 15})
 	c.Check(math.Abs(found-expected) <= 1e-6, Equals, true)
 }
 
 func (*Tests) TestCollapse(c *C) {
 	tree1 := &Tree{
-		Hist: []int{0, 1},
+		Hist: []float64{0, 1},
 	}
 	for i := 0; i < 5; i++ {
 		tree1 = &Tree{
 			LeftChild: &Tree{
-				Hist: []int{1, 0},
+				Hist: []float64{1, 0},
 			},
 			RightChild: tree1,
-			Hist:       []int{tree1.Hist[0] + 1, tree1.Hist[1]},
+			Hist:       []float64{tree1.Hist[0] + 1, tree1.Hist[1]},
 		}
 	}
 

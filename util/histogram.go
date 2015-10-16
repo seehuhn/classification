@@ -17,25 +17,34 @@
 package util
 
 // Histogram is the type used to represent class counts in a sample.
-type Histogram []int
+// The counts are stored as float64 values to allow for samples with
+// non-integer weights.
+type Histogram []float64
 
 // GetHist counts how many instances of each class are seen in the
 // given rows of the response data: `rows` specifies which entries of
 // `y` to consider, `classes` gives the total number of possible
-// classes, `y` gives the observed classes.  The result is a Histogram
-// of the class counts.
-func GetHist(rows []int, classes int, y []int) Histogram {
-	hist := make([]int, classes)
-	for _, row := range rows {
-		hist[y[row]]++
+// classes, `y` gives the observed classes, and `w` gives the sample
+// weights.  If `w` is nil, weight 1 is used for all samples.  The
+// result is a Histogram of the (weighted) class counts.
+func GetHist(rows []int, classes int, y []int, w []float64) Histogram {
+	hist := make(Histogram, classes)
+	if w == nil {
+		for _, row := range rows {
+			hist[y[row]]++
+		}
+	} else {
+		for _, row := range rows {
+			hist[y[row]] += w[row]
+		}
 	}
 	return hist
 }
 
 // Sum returns the total number of samples corresponding to the
 // histogram, obtained by adding up all entries of `hist`.
-func (hist Histogram) Sum() int {
-	res := 0
+func (hist Histogram) Sum() float64 {
+	res := 0.0
 	for _, ni := range hist {
 		res += ni
 	}
@@ -46,9 +55,9 @@ func (hist Histogram) Sum() int {
 // obtained by normalising the entries of the histogram.
 func (hist Histogram) Probabilities() []float64 {
 	prob := make([]float64, len(hist))
-	n := hist.Sum()
+	total := hist.Sum()
 	for i, ni := range hist {
-		prob[i] = float64(ni) / float64(n)
+		prob[i] = ni / total
 	}
 	return prob
 }

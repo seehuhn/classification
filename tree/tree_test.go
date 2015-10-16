@@ -8,14 +8,14 @@ func (*Tests) TestClasses(c *C) {
 	tree := &Tree{
 		LeftChild: &Tree{
 			LeftChild: &Tree{
-				Hist: []int{1, 0, 0},
+				Hist: []float64{1, 0, 0},
 			},
 			RightChild: &Tree{
-				Hist: []int{0, 1, 0},
+				Hist: []float64{0, 1, 0},
 			},
 		},
 		RightChild: &Tree{
-			Hist: []int{0, 0, 1},
+			Hist: []float64{0, 0, 1},
 		},
 	}
 	c.Check(tree.NumClasses(), Equals, 3)
