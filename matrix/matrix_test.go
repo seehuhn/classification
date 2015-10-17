@@ -71,11 +71,13 @@ func TestReadRow(t *testing.T) {
 		{"1\n2\n3", [][]float64{{1.0}, {2.0}, {3.0}}},
 		{"1,2\n\n", [][]float64{{1.0, 2.0}}},
 		{"1, 2\n", [][]float64{{1.0, 2.0}}},
-		{"1,x,3\n", [][]float64{{1.0, math.NaN(), 3.0}}},
+		{"1,,3\n", [][]float64{{1.0, math.NaN(), 3.0}}},
+		{"1,   ,3\n", [][]float64{{1.0, math.NaN(), 3.0}}},
 	}
-	for _, data := range testData {
+	for no, data := range testData {
 		r := strings.NewReader(data.in)
-		scanner := newTokenizer(r,
+		scanner := newTokenizer("<test>",
+			r,
 			func(int) ColumnType { return Float64Column },
 			CSV)
 		pos := 0
@@ -86,6 +88,12 @@ func TestReadRow(t *testing.T) {
 					data.in, data.out[pos], row)
 			}
 			pos++
+		}
+		if scanner.Error != nil {
+			t.Errorf("unexpected error: %s", scanner.Error.Error())
+		}
+		if pos < len(data.out) {
+			t.Errorf("test %d, row %d failed", no+1, pos+1)
 		}
 	}
 }

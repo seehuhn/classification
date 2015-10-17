@@ -19,7 +19,6 @@ package matrix
 import (
 	"bufio"
 	"compress/gzip"
-	"errors"
 	"io"
 	"math"
 	"os"
@@ -27,9 +26,23 @@ import (
 	"strings"
 )
 
-// ErrSyntax is returned by the `TextFormat.Read` method when the
-// input file is malformed.
-var ErrSyntax = errors.New("malformed input data")
+// SyntaxError objects are returned by the `TextFormat.Read` method,
+// when the input file is malformed.
+type SyntaxError struct {
+	FileName     string
+	Line, Column int
+	Message      string
+}
+
+func (err *SyntaxError) Error() string {
+	parts := []string{
+		err.FileName,
+		strconv.Itoa(err.Line + 1),
+		strconv.Itoa(err.Column + 1),
+		" " + err.Message,
+	}
+	return strings.Join(parts, ":")
+}
 
 // TextFormat describes the file format for a textual representation
 // of a matrix.
@@ -42,6 +55,11 @@ type TextFormat struct {
 	// FieldSep specifies the character which separates matrix
 	// elements within a row.
 	FieldSep byte
+
+	// NAString specifies the string to indicate missing values in
+	// float64 columns.  Input fields which equal `NAString` are
+	// replaced with NaN values in the output matrix.
+	NAString string
 }
 
 // CSV describes the file format for .csv files (comma-separated
@@ -49,6 +67,7 @@ type TextFormat struct {
 var CSV = &TextFormat{
 	RowSep:   '\n',
 	FieldSep: ',',
+	NAString: "",
 }
 
 // Plain describes the file format where matrix entries within a row
@@ -57,6 +76,7 @@ var CSV = &TextFormat{
 var Plain = &TextFormat{
 	RowSep:   '\n',
 	FieldSep: ' ',
+	NAString: "NA",
 }
 
 func (opts *TextFormat) Read(fname string, cols ColumnFunc) (*Float64, *Int, error) {
@@ -78,26 +98,34 @@ func (opts *TextFormat) Read(fname string, cols ColumnFunc) (*Float64, *Int, err
 		in = file
 	}
 
-	n := 0
 	pFloat64 := 0
 	pInt := 0
 	float64Data := []float64{}
 	intData := []int{}
-	scanner := newTokenizer(in, cols, opts)
+	scanner := newTokenizer(fname, in, cols, opts)
 	for scanner.Scan() {
 		float64Row, intRow := scanner.Row()
-		if n == 0 {
+		if scanner.lineNo == 0 {
 			pFloat64 = len(float64Row)
 			pInt = len(intRow)
 		} else if len(float64Row) != pFloat64 || len(intRow) != pInt {
-			return nil, nil, ErrSyntax
+			return nil, nil, &SyntaxError{
+				FileName: fname,
+				Line:     scanner.lineNo,
+				Message:  "wrong number of columns",
+			}
 		}
 		float64Data = append(float64Data, float64Row...)
 		intData = append(intData, intRow...)
-		n++
+		scanner.lineNo++
+	}
+	if scanner.Error != nil {
+		return nil, nil, scanner.Error
 	}
 
-	return NewFloat64(n, pFloat64, 0, float64Data), NewInt(n, pInt, 0, intData), nil
+	res1 := NewFloat64(scanner.lineNo, pFloat64, 0, float64Data)
+	res2 := NewInt(scanner.lineNo, pInt, 0, intData)
+	return res1, res2, nil
 }
 
 // ColumnType is used by `matrix.ColumnFunc` to specify the role of
@@ -124,20 +152,24 @@ const (
 type ColumnFunc func(int) ColumnType
 
 type tokenizer struct {
+	fileName string
 	*TextFormat
 	scanner     *bufio.Scanner
 	atEOL       bool
+	lineNo      int
 	lineStarted bool
+	Error       error
 
 	cols       ColumnFunc
 	float64Row []float64
 	intRow     []int
 }
 
-func newTokenizer(r io.Reader, cols ColumnFunc, opts *TextFormat) *tokenizer {
+func newTokenizer(fileName string, r io.Reader, cols ColumnFunc, opts *TextFormat) *tokenizer {
 	res := &tokenizer{
-		scanner:    bufio.NewScanner(r),
+		fileName:   fileName,
 		TextFormat: opts,
+		scanner:    bufio.NewScanner(r),
 		cols:       cols,
 	}
 	res.scanner.Split(res.splitField)
@@ -188,27 +220,41 @@ func (s *tokenizer) Scan() bool {
 			return true
 		}
 		token = strings.TrimSpace(token)
-		if token == "" {
-			continue
-		}
 
 		colType := s.cols(col)
-		col++
 		switch colType {
 		case Float64Column:
-			x, err := strconv.ParseFloat(token, 64)
-			if err != nil && err.(*strconv.NumError).Err == strconv.ErrSyntax {
+			var x float64
+			var err error
+			if token == s.NAString {
 				x = math.NaN()
+			} else {
+				x, err = strconv.ParseFloat(token, 64)
+				if err != nil {
+					s.Error = &SyntaxError{
+						FileName: s.fileName,
+						Line:     s.lineNo,
+						Column:   col,
+						Message:  err.Error(),
+					}
+					return false
+				}
 			}
 			s.float64Row = append(s.float64Row, x)
 		case IntColumn:
-			x, err := strconv.ParseFloat(token, 64)
+			x, err := strconv.ParseInt(token, 10, 0)
 			if err != nil {
-				// TODO(voss): how to return an error to the caller here?
-				panic(err)
+				s.Error = &SyntaxError{
+					FileName: s.fileName,
+					Line:     s.lineNo,
+					Column:   col,
+					Message:  err.Error(),
+				}
+				return false
 			}
 			s.intRow = append(s.intRow, int(x))
 		}
+		col++
 	}
 	return len(s.intRow) > 0 || len(s.float64Row) > 0
 }
