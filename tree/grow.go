@@ -73,9 +73,9 @@ var CART = &Builder{
 // DefaultBuilder specifies the default parameters for
 // constructing a tree; see the `Builder` documentation for the
 // meaning of the individual fields.  The values given in
-// `DefaultBuilder` are used by the `NewFromTrainingsData`
+// `DefaultBuilder` are used by the `NewFromTrainingData`
 // function, and to replace zero values in a `Builder` structure
-// when the `Builder.NewFromTrainingsData` method is called.
+// when the `Builder.NewFromTrainingData` method is called.
 var DefaultBuilder = CART
 
 func (b *Builder) setDefaults() {
@@ -104,15 +104,15 @@ func (b *Builder) fullTree(x *matrix.Float64, classes int, response []int, w []f
 	return xb.getFullTree(rows, hist)
 }
 
-// NewFromTrainingsData constructs a new classification tree from
-// trainings data.
+// NewFromTrainingData constructs a new classification tree from
+// training data.
 //
 // K-fold crossvalidation is used to find the optimal pruning
 // parameter.
 //
 // The return values are the new tree and an estimate for the average
 // value of the loss function (given by `b.XValLoss`).
-func (b *Builder) NewFromTrainingsData(classes int, x *matrix.Float64,
+func (b *Builder) NewFromTrainingData(classes int, x *matrix.Float64,
 	response []int, w []float64) (*Tree, float64) {
 	b.setDefaults()
 

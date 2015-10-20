@@ -86,7 +86,7 @@ func main() {
 		PruneScore: impurity.MisclassificationError,
 	}
 
-	_, estLoss := b.NewFromTrainingsData(classes, x, response, nil)
+	_, estLoss := b.NewFromTrainingData(classes, x, response, nil)
 
 	fmt.Println(n, estLoss)
 }

@@ -31,7 +31,7 @@ const maxColumns = 10000
 // Tree is the data type to represent nodes of a classification tree.
 type Tree struct {
 	// Hist gives the frequencies of the different reponses in the
-	// trainings set, for this sub-tree.
+	// training set, for this sub-tree.
 	Hist util.Histogram
 
 	// LeftChild points to the left subtree attached to this node.
@@ -118,7 +118,7 @@ func (t *Tree) lookup(x []float64) *Tree {
 }
 
 // GetClassCounts returns the class counts for input `x`, as seen in
-// the trainings data.
+// the training data.
 func (t *Tree) GetClassCounts(x []float64) util.Histogram {
 	return t.lookup(x).Hist
 }
@@ -207,18 +207,18 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 	}
 }
 
-// NewFromTrainingsData constructs a new classification tree from a
-// sample of trainings data.  The function uses the settings from
+// NewFromTrainingData constructs a new classification tree from a
+// sample of training data.  The function uses the settings from
 // `DefaultBuilder`.
 //
 // The argument `classes` gives the number of classes in the response
 // variable.  The rows of the matrix `x` are the observations from the
-// trainings data set, and the corresponding classes are given as the
+// training data set, and the corresponding classes are given as the
 // entries of `y` (which must be in the range 0, 1, ..., classes-1).
 //
 // The return values are the new tree and a cross-validated estimate
 // for the average value of the loss function (given by
 // `DefaultBuilder.XValLoss`).
-func NewFromTrainingsData(classes int, x *matrix.Float64, response []int, w []float64) (*Tree, float64) {
-	return DefaultBuilder.NewFromTrainingsData(classes, x, response, w)
+func NewFromTrainingData(classes int, x *matrix.Float64, response []int, w []float64) (*Tree, float64) {
+	return DefaultBuilder.NewFromTrainingData(classes, x, response, w)
 }

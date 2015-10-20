@@ -194,7 +194,7 @@ func main() {
 	}
 	x := matrix.NewFloat64(n, p, 0, raw)
 
-	tree, estLoss := tree.NewFromTrainingsData(2, x, y, nil)
+	tree, estLoss := tree.NewFromTrainingData(2, x, y, nil)
 	fmt.Println(estLoss)
 	tree.ForeachLeafRegion(func(a, b []float64, hist util.Histogram, depth int) {
 		fmt.Println(a[0], b[0], a[1], b[1], hist.Probabilities())
