@@ -59,11 +59,11 @@ type Builder struct {
 	K int
 }
 
-// CART specifies the parameters for constructin a tree as suggested
+// CART specifies the parameters for constructing a tree as suggested
 // in the book "Classification and Regression Trees" by Breiman et
 // al. (Chapman & Hall CRC, 1984).
 var CART = &Builder{
-	StopGrowth: stop.IfPureOrAtMost(10),
+	StopGrowth: stop.IfPureOrAtMost(5),
 	SplitScore: impurity.Gini,
 	PruneScore: impurity.MisclassificationError,
 	XValLoss:   loss.ZeroOne,

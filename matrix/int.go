@@ -64,6 +64,16 @@ func (mat *Int) At(i, j int) int {
 	return mat.data[i*mat.stride+j]
 }
 
+// Set changes the matrix alement at row `i`, column `j` to be `x`.
+func (mat *Int) Set(i, j int, x int) {
+	mat.data[i*mat.stride+j] = x
+}
+
+// Inc increments the matrix alement at row `i`, column `j` by 1.
+func (mat *Int) Inc(i, j int) {
+	mat.data[i*mat.stride+j]++
+}
+
 // Row returns a slice representing row `i` of the matrix.  The
 // returned slice is a sub-slice of the matrix data, and any changes
 // to elements of the returned row slice are visible in the underlying
