@@ -18,7 +18,9 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 func zipDataColumns(col int) matrix.ColumnType {
 	switch col {
 	case 0:
-		return matrix.IntColumn
+		return matrix.RoundToIntColumn
+	case 257: // work around spaces at the end of line
+		return matrix.IgnoredColumn
 	default:
 		return matrix.Float64Column
 	}
@@ -39,12 +41,14 @@ func main() {
 	XTrain, YTrain, err := matrix.Plain.Read(trainFile, zipDataColumns)
 	if err != nil {
 		fmt.Printf("cannot read %s: %s\n", trainFile, err.Error())
+		return
 	}
 
 	testFile := "zip.test.gz"
 	XTest, YTest, err := matrix.Plain.Read(testFile, zipDataColumns)
 	if err != nil {
 		fmt.Printf("cannot read %s: %s\n", testFile, err.Error())
+		return
 	}
 
 	b := &tree.Builder{

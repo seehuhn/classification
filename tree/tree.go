@@ -125,22 +125,13 @@ func (t *Tree) GetClassCounts(x []float64) util.Histogram {
 
 // EstimateClassProbabilities returns the estimated class
 // probabilities for input `x`.
-func (t *Tree) EstimateClassProbabilities(x []float64) []float64 {
+func (t *Tree) EstimateClassProbabilities(x []float64) util.Histogram {
 	return t.lookup(x).Hist.Probabilities()
 }
 
 // GuessClass tries to guess the class corresponding to input `x`.
 func (t *Tree) GuessClass(x []float64) int {
-	hist := t.lookup(x).Hist
-	bestClass := -1
-	bestCount := -1.0
-	for class, count := range hist {
-		if count > bestCount {
-			bestCount = count
-			bestClass = class
-		}
-	}
-	return bestClass
+	return t.lookup(x).Hist.ArgMax()
 }
 
 func (t *Tree) walkPostOrder(fn func(*Tree, int), depth int) {

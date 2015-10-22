@@ -30,4 +30,6 @@ func main() {
 	tree := &TreeFactory{"CART", tree.CART}
 	samples := classification.NewTwoNormals(1.0)
 	classification.Assess(tree, samples, 1000, 10000)
+	samples = classification.NewTwoNormals(2.0)
+	classification.Assess(tree, samples, 1000, 10000)
 }

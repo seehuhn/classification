@@ -27,7 +27,7 @@ import (
 )
 
 // SyntaxError objects are returned by the `TextFormat.Read` method,
-// when the input file is malformed.
+// in case the input file is malformed.
 type SyntaxError struct {
 	FileName     string
 	Line, Column int
@@ -141,6 +141,12 @@ const (
 	// by `int` values in the program.
 	IntColumn
 
+	// RoundToIntColumn indicates columns for categorical inputs,
+	// represented by `int` values in the program but by floating
+	// point values in the file.  The values are rounded to the
+	// nearest integer.
+	RoundToIntColumn
+
 	// IgnoredColumn indicates columns in the input file which should
 	// be ignored.
 	IgnoredColumn
@@ -252,6 +258,19 @@ func (s *tokenizer) Scan() bool {
 				}
 				return false
 			}
+			s.intRow = append(s.intRow, int(x))
+		case RoundToIntColumn:
+			x, err := strconv.ParseFloat(token, 64)
+			if err != nil {
+				s.Error = &SyntaxError{
+					FileName: s.fileName,
+					Line:     s.lineNo,
+					Column:   col,
+					Message:  err.Error(),
+				}
+				return false
+			}
+			x = math.Ceil(x - 0.5)
 			s.intRow = append(s.intRow, int(x))
 		}
 		col++

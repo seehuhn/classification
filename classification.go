@@ -3,14 +3,14 @@ package classification
 import (
 	"fmt"
 	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/util"
 	"github.com/seehuhn/mt19937"
 	"math/rand"
 	"time"
 )
 
 type Classifier interface {
-	EstimateClassProbabilities(x []float64) []float64
-	GuessClass(x []float64) int
+	EstimateClassProbabilities(x []float64) util.Histogram
 }
 
 type Factory interface {
@@ -66,13 +66,19 @@ func Assess(classifier Factory, samples SimulatedSamples, nTrain, nTest int) {
 	XTrain, YTrain := samples.NewSamples(nTrain)
 	c := classifier.FromTrainingData(numClasses, XTrain, YTrain, nil)
 
-	res := matrix.NewInt(numClasses, numClasses, 0, nil)
 	XTest, YTest := samples.NewSamples(nTest)
+	errorCount := 0
+	errorScore := 0.0
 	for i := 0; i < nTest; i++ {
 		row := XTest.Row(i)
-		guessed := c.GuessClass(row)
-		correct := YTest[i]
-		res.Inc(correct, guessed)
+		prob := c.EstimateClassProbabilities(row)
+
+		errorScore += 1.0 - prob[YTest[i]]
+
+		if prob.ArgMax() != YTest[i] {
+			errorCount++
+		}
 	}
-	fmt.Println(res)
+	pErr := float64(errorCount) / float64(nTest)
+	fmt.Println(pErr, errorScore/float64(nTest))
 }

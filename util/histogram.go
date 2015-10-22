@@ -53,11 +53,26 @@ func (hist Histogram) Sum() float64 {
 
 // Probabilities returns an estimate of the class probabilities,
 // obtained by normalising the entries of the histogram.
-func (hist Histogram) Probabilities() []float64 {
-	prob := make([]float64, len(hist))
+func (hist Histogram) Probabilities() Histogram {
+	prob := make(Histogram, len(hist))
 	total := hist.Sum()
 	for i, ni := range hist {
 		prob[i] = ni / total
 	}
 	return prob
+}
+
+// ArgMax returns the index of the histogram slot with the highest
+// value.  In case of a draw, the lowest index involved is returned.
+func (hist Histogram) ArgMax() int {
+	bestIdx := 0
+	bestVal := hist[0]
+	for i := 1; i < len(hist); i++ {
+		val := hist[i]
+		if val > bestVal {
+			bestIdx = i
+			bestVal = val
+		}
+	}
+	return bestIdx
 }
