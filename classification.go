@@ -1,12 +1,12 @@
 package classification
 
 import (
-	"fmt"
+	"github.com/seehuhn/classification/data"
+	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/util"
-	"github.com/seehuhn/mt19937"
-	"math/rand"
-	"time"
+	"math"
+	"runtime"
 )
 
 type Classifier interface {
@@ -22,63 +22,60 @@ type Factory interface {
 		weight []float64) Classifier
 }
 
-type SimulatedSamples interface {
-	Name() string
-	NumClasses() int
-	NewSamples(n int) (X *matrix.Float64, Y []int)
+type Result struct {
+	MeanLoss float64
+	StdErr   float64
+	Err      error
 }
 
-type twoNormals struct {
-	means []float64
-	rng   *rand.Rand
-}
-
-func NewTwoNormals(delta float64) SimulatedSamples {
-	res := &twoNormals{
-		means: []float64{0.0, delta},
-		rng:   rand.New(mt19937.New()),
-	}
-	res.rng.Seed(time.Now().UnixNano())
-	return res
-}
-
-func (ss *twoNormals) NumClasses() int {
-	return 2
-}
-
-func (ss *twoNormals) NewSamples(n int) (X *matrix.Float64, Y []int) {
-	X = matrix.NewFloat64(n, 1, 0, nil)
-	Y = make([]int, n)
-	for i := 0; i < n; i++ {
-		Yi := ss.rng.Intn(2)
-		Y[i] = Yi
-		X.Set(i, 0, ss.rng.NormFloat64()+ss.means[Yi])
-	}
-	return
-}
-
-func (ss *twoNormals) Name() string {
-	return fmt.Sprintf("two normals (delta=%g)", ss.means[1])
-}
-
-func Assess(classifier Factory, samples SimulatedSamples, nTrain, nTest int) {
+func doAssess(cf Factory, samples data.Set, L loss.Function) *Result {
 	numClasses := samples.NumClasses()
-	XTrain, YTrain := samples.NewSamples(nTrain)
-	c := classifier.FromTrainingData(numClasses, XTrain, YTrain, nil)
+	XTrain, YTrain, err := samples.TrainingSet()
+	if err != nil {
+		return &Result{0, 0, err}
+	}
+	c := cf.FromTrainingData(numClasses, XTrain, YTrain, nil)
 
-	XTest, YTest := samples.NewSamples(nTest)
-	errorCount := 0
-	errorScore := 0.0
+	XTest, YTest, err := samples.TestSet()
+	if err != nil {
+		return &Result{0, 0, err}
+	}
+
+	cumLoss := 0.0
+	cumLoss2 := 0.0
+	nTest := len(YTest)
 	for i := 0; i < nTest; i++ {
 		row := XTest.Row(i)
 		prob := c.EstimateClassProbabilities(row)
-
-		errorScore += 1.0 - prob[YTest[i]]
-
-		if prob.ArgMax() != YTest[i] {
-			errorCount++
-		}
+		l := L(YTest[i], prob)
+		cumLoss += l
+		cumLoss2 += l * l
 	}
-	pErr := float64(errorCount) / float64(nTest)
-	fmt.Println(pErr, errorScore/float64(nTest))
+	nn := float64(nTest)
+	cumLoss /= nn
+	cumLoss2 /= nn
+	stdErr := math.Sqrt((cumLoss2 - cumLoss*cumLoss) / nn)
+
+	return &Result{cumLoss, stdErr, nil}
+}
+
+var queue chan int
+
+func Assess(cf Factory, samples data.Set, L loss.Function) <-chan *Result {
+	worker := <-queue
+	resChan := make(chan *Result, 1)
+	go func() {
+		res := doAssess(cf, samples, L)
+		resChan <- res
+		queue <- worker
+	}()
+	return resChan
+}
+
+func init() {
+	n := runtime.GOMAXPROCS(0)
+	queue = make(chan int, n)
+	for i := 0; i < n; i++ {
+		queue <- i
+	}
 }
