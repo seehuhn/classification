@@ -1,0 +1,13 @@
+TODO
+----
+
+- Rename `tree.NewFromTrainingData` to `tree.FromTrainingData`?
+- Make tree.Builder and classification.Factory be the same?  Also,
+  decide whether it's "Builder" or "Factory" or something else.
+- add a new `rows` argument to all `FromTrainingData` functions?
+- maybe use a struct to collect all arguments of `FromTrainingData`?
+- try to move crossvalidation out into its own package
+- implement logit regression
+- merge the "stop" package into "tree"?
+- make the digits dataset download the data and store it in some cache
+  directory.  Add more datasets.

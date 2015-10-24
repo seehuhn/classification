@@ -24,18 +24,14 @@ const xValSeed = 1769149487
 
 func getXValSets(k, K, n int) (trainingSet, testSet []int) {
 	if K < 2 {
-		panic("need at least two groups for cross-validation")
+		panic("need at least K=2 groups for cross-validation")
 	}
-
-	testSetSize := n / K
-	if testSetSize < 1 {
+	if n < K {
 		panic("not enough samples for cross-validation")
 	}
-	a := k * testSetSize
-	b := (k + 1) * testSetSize
-	if k == K-1 {
-		b = n
-	}
+
+	a := k * n / K
+	b := (k + 1) * n / K
 
 	rng := rand.New(rand.NewSource(xValSeed))
 	perm := rng.Perm(n)

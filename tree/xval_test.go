@@ -12,6 +12,8 @@ func (*Tests) TestXValClasses(c *C) {
 			for k := 0; k < K; k++ {
 				trainingSet, testSet := getXValSets(k, K, n)
 				c.Check(len(trainingSet) >= len(testSet)-1, Equals, true)
+				c.Check(len(testSet) >= n/K, Equals, true)
+				c.Check(len(testSet) <= n/K+1, Equals, true)
 				allTests = append(allTests, testSet...)
 
 				together := append(trainingSet, testSet...)
