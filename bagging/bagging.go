@@ -2,10 +2,17 @@ package bagging
 
 import (
 	"github.com/seehuhn/classification"
+	"github.com/seehuhn/classification/util"
 )
 
 type baggingClassifier struct {
 	voters []classification.Classifier
+}
+
+func (bag *baggingClassifier) EstimateClassProbabilities(x []float64) util.Histogram {
+	// TODO(voss): implement this
+	panic("not implemented")
+	return nil
 }
 
 type baggingFactory struct {
@@ -14,15 +21,15 @@ type baggingFactory struct {
 }
 
 func (f *baggingFactory) Name() string {
-	return f.in.Name + " (bagged)"
+	return f.in.Name() + " (bagged)"
 }
 
-func (f *baggingFactory) FromTrainingData(numClasses int, X *matrix.Float64,
-	Y []int, weight []float64) classification.Classifier {
+func (f *baggingFactory) FromTrainingData(data *classification.TrainingData) classification.Classifier {
 	res := &baggingClassifier{}
 	res.voters = make([]classification.Classifier, f.n)
 	for i := 0; i < f.n; i++ {
-
+		// TODO(voss): implement this
+		panic("not implemented")
 	}
 	return res
 }

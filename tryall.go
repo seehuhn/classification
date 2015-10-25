@@ -8,7 +8,6 @@ import (
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/stop"
 	"github.com/seehuhn/classification/tree"
 	"math"
@@ -17,16 +16,16 @@ import (
 
 type TreeFactory struct {
 	name    string
-	builder *tree.Builder
+	builder *tree.Factory
 }
 
 func (tf *TreeFactory) Name() string {
 	return tf.name
 }
 
-func (tf *TreeFactory) FromTrainingData(numClasses int, X *matrix.Float64,
-	Y []int, weight []float64) classification.Classifier {
-	tree, _ := tf.builder.NewFromTrainingData(numClasses, X, Y, weight)
+func (tf *TreeFactory) FromTrainingData(data *classification.TrainingData) classification.Classifier {
+	tree, _ := tf.builder.FromTrainingData(
+		data.NumClasses, data.X, data.Y, data.Weight)
 	return tree
 }
 
@@ -50,7 +49,7 @@ type row struct {
 
 func main() {
 	tree1 := &TreeFactory{"CART", tree.CART}
-	tree2builder := &tree.Builder{
+	tree2builder := &tree.Factory{
 		StopGrowth: stop.IfPure,
 		SplitScore: impurity.Gini,
 		PruneScore: impurity.Gini,

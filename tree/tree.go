@@ -198,9 +198,9 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 	}
 }
 
-// NewFromTrainingData constructs a new classification tree from a
+// FromTrainingData constructs a new classification tree from a
 // sample of training data.  The function uses the settings from
-// `DefaultBuilder`.
+// `DefaultFactory`.
 //
 // The argument `classes` gives the number of classes in the response
 // variable.  The rows of the matrix `x` are the observations from the
@@ -209,7 +209,7 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 //
 // The return values are the new tree and a cross-validated estimate
 // for the average value of the loss function (given by
-// `DefaultBuilder.XValLoss`).
-func NewFromTrainingData(classes int, x *matrix.Float64, response []int, w []float64) (*Tree, float64) {
-	return DefaultBuilder.NewFromTrainingData(classes, x, response, w)
+// `DefaultFactory.XValLoss`).
+func FromTrainingData(classes int, x *matrix.Float64, response []int, w []float64) (*Tree, float64) {
+	return DefaultFactory.FromTrainingData(classes, x, response, w)
 }

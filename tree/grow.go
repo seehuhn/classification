@@ -26,11 +26,11 @@ import (
 	"sort"
 )
 
-// Builder is a structure to store the parameters governing the
+// Factory is a structure to store the parameters governing the
 // growing and pruning of classification trees.  Any zero field values
 // are interpreted as the corresponding values from the
-// `DefaultBuilder` structure.
-type Builder struct {
+// `DefaultFactory` structure.
+type Factory struct {
 	// StopGrowth decides for every node of the initial tree whether a
 	// further split is considered.  The default is to stop splitting
 	// nodes once the node only contains a single type of
@@ -62,7 +62,7 @@ type Builder struct {
 // CART specifies the parameters for constructing a tree as suggested
 // in the book "Classification and Regression Trees" by Breiman et
 // al. (Chapman & Hall CRC, 1984).
-var CART = &Builder{
+var CART = &Factory{
 	StopGrowth: stop.IfPureOrAtMost(5),
 	SplitScore: impurity.Gini,
 	PruneScore: impurity.MisclassificationError,
@@ -70,41 +70,41 @@ var CART = &Builder{
 	K:          10, // p.75
 }
 
-// DefaultBuilder specifies the default parameters for
-// constructing a tree; see the `Builder` documentation for the
+// DefaultFactory specifies the default parameters for
+// constructing a tree; see the `Factory` documentation for the
 // meaning of the individual fields.  The values given in
-// `DefaultBuilder` are used by the `NewFromTrainingData`
-// function, and to replace zero values in a `Builder` structure
-// when the `Builder.NewFromTrainingData` method is called.
-var DefaultBuilder = CART
+// `DefaultFactory` are used by the `FromTrainingData`
+// function, and to replace zero values in a `Factory` structure
+// when the `Factory.FromTrainingData` method is called.
+var DefaultFactory = CART
 
-func (b *Builder) setDefaults() {
+func (b *Factory) setDefaults() {
 	if b.XValLoss == nil {
-		b.XValLoss = DefaultBuilder.XValLoss
+		b.XValLoss = DefaultFactory.XValLoss
 	}
 	if b.K == 0 {
-		b.K = DefaultBuilder.K
+		b.K = DefaultFactory.K
 	}
 	if b.StopGrowth == nil {
-		b.StopGrowth = DefaultBuilder.StopGrowth
+		b.StopGrowth = DefaultFactory.StopGrowth
 	}
 	if b.SplitScore == nil {
-		b.SplitScore = DefaultBuilder.SplitScore
+		b.SplitScore = DefaultFactory.SplitScore
 	}
 	if b.PruneScore == nil {
-		b.PruneScore = DefaultBuilder.PruneScore
+		b.PruneScore = DefaultFactory.PruneScore
 	}
 }
 
-func (b *Builder) fullTree(x *matrix.Float64, classes int, response []int, w []float64) *Tree {
+func (b *Factory) fullTree(x *matrix.Float64, classes int, response []int, w []float64) *Tree {
 	b.setDefaults()
 	rows := intRange(len(response))
 	hist := util.GetHist(rows, classes, response, w)
-	xb := &xBuilder{*b, x, classes, response}
+	xb := &xFactory{*b, x, classes, response}
 	return xb.getFullTree(rows, hist)
 }
 
-// NewFromTrainingData constructs a new classification tree from
+// FromTrainingData constructs a new classification tree from
 // training data.
 //
 // K-fold crossvalidation is used to find the optimal pruning
@@ -112,7 +112,7 @@ func (b *Builder) fullTree(x *matrix.Float64, classes int, response []int, w []f
 //
 // The return values are the new tree and an estimate for the average
 // value of the loss function (given by `b.XValLoss`).
-func (b *Builder) NewFromTrainingData(classes int, x *matrix.Float64,
+func (b *Factory) FromTrainingData(classes int, x *matrix.Float64,
 	response []int, w []float64) (*Tree, float64) {
 	b.setDefaults()
 
@@ -134,7 +134,7 @@ func (b *Builder) NewFromTrainingData(classes int, x *matrix.Float64,
 
 		// build the initial tree
 		learnHist := util.GetHist(learnRows, classes, response, w)
-		xb := &xBuilder{*b, x, classes, response}
+		xb := &xFactory{*b, x, classes, response}
 		tree := xb.getFullTree(learnRows, learnHist)
 
 		// get all candidates for pruning the tree
@@ -174,8 +174,8 @@ func (b *Builder) NewFromTrainingData(classes int, x *matrix.Float64,
 	return candidates[bestIdx], bestLoss / float64(len(response))
 }
 
-type xBuilder struct {
-	Builder
+type xFactory struct {
+	Factory
 	x        *matrix.Float64
 	classes  int
 	response []int
@@ -190,7 +190,7 @@ type xBuilder struct {
 //    - after the split, the order stays the same, but elements are
 //      sorted into two groups.
 
-func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
+func (b *xFactory) getFullTree(rows []int, hist util.Histogram) *Tree {
 	// TODO(voss): use a multi-threaded algorithm?
 	if b.StopGrowth(hist) {
 		return &Tree{
@@ -209,7 +209,7 @@ func (b *xBuilder) getFullTree(rows []int, hist util.Histogram) *Tree {
 	}
 }
 
-func (b *xBuilder) findBestSplit(rows []int, hist util.Histogram) *searchResult {
+func (b *xFactory) findBestSplit(rows []int, hist util.Histogram) *searchResult {
 	best := &searchResult{}
 	first := true
 	_, p := b.x.Shape()

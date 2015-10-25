@@ -13,13 +13,16 @@ type Classifier interface {
 	EstimateClassProbabilities(x []float64) util.Histogram
 }
 
+type TrainingData struct {
+	NumClasses int
+	X          *matrix.Float64
+	Y          []int
+	Weight     []float64
+}
+
 type Factory interface {
 	Name() string
-	FromTrainingData(
-		numClasses int,
-		X *matrix.Float64,
-		Y []int,
-		weight []float64) Classifier
+	FromTrainingData(data *TrainingData) Classifier
 }
 
 type Result struct {
@@ -34,7 +37,12 @@ func doAssess(cf Factory, samples data.Set, L loss.Function) *Result {
 	if err != nil {
 		return &Result{0, 0, err}
 	}
-	c := cf.FromTrainingData(numClasses, XTrain, YTrain, nil)
+	data := &TrainingData{
+		NumClasses: numClasses,
+		X:          XTrain,
+		Y:          YTrain,
+	}
+	c := cf.FromTrainingData(data)
 
 	XTest, YTest, err := samples.TestSet()
 	if err != nil {

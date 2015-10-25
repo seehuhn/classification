@@ -66,10 +66,10 @@ func main() {
 	}
 	x := matrix.NewFloat64(n, 1, 0, raw)
 
-	builder := &tree.Builder{
+	builder := &tree.Factory{
 		PruneScore: impurity.Gini,
 	}
-	builder.NewFromTrainingData(2, x, response, nil)
+	builder.FromTrainingData(2, x, response, nil)
 	// tree, estLoss := builder.TreeFromTrainingData(2, x, response)
 
 	// tree.ForeachLeafRegion(1, func(a, b []float64, hist util.Histogram) {
@@ -92,7 +92,7 @@ func main() {
 	// for j := 0; j < N; j++ {
 	//	xj, yj := sample()
 	//	pj := tree.Lookup([]float64{xj})
-	//	l := classification.DefaultBuilder.XValLoss(yj, pj)
+	//	l := tree.DefaultFactory.XValLoss(yj, pj)
 	//	lVal += l
 	//	lSquaredVal += l * l
 	// }

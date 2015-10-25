@@ -64,7 +64,7 @@ func main() {
 	}
 	x := matrix.NewFloat64(n, p, 0, raw)
 
-	b := &tree.Builder{
+	b := &tree.Factory{
 		XValLoss: loss.Deviance,
 		K:        5,
 
@@ -86,7 +86,7 @@ func main() {
 		PruneScore: impurity.MisclassificationError,
 	}
 
-	_, estLoss := b.NewFromTrainingData(classes, x, response, nil)
+	_, estLoss := b.FromTrainingData(classes, x, response, nil)
 
 	fmt.Println(n, estLoss)
 }

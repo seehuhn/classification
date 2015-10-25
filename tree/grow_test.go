@@ -19,8 +19,8 @@ func (*Tests) TestFindBestSplit1(c *C) {
 	}
 	data := matrix.NewFloat64(n, 1, 0, raw)
 
-	b := &xBuilder{
-		Builder: Builder{
+	b := &xFactory{
+		Factory: Factory{
 			SplitScore: impurity.Gini,
 		},
 		x:        data,
@@ -63,8 +63,8 @@ func (*Tests) TestFindBestSplit2(c *C) {
 	}
 	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
-	b := &xBuilder{
-		Builder: Builder{
+	b := &xFactory{
+		Factory: Factory{
 			SplitScore: impurity.Gini,
 		},
 		x:        data,
@@ -106,8 +106,8 @@ func (*Tests) TestFindBestSplit3(c *C) {
 	}
 	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
-	b := &xBuilder{
-		Builder: Builder{
+	b := &xFactory{
+		Factory: Factory{
 			SplitScore: impurity.Gini,
 		},
 		x:        data,

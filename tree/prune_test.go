@@ -28,7 +28,7 @@ func (*Tests) TestInitialPrune(c *C) {
 			},
 		},
 	}
-	b := &Builder{
+	b := &Factory{
 		PruneScore: impurity.Gini,
 	}
 	b.initialPrune(tree1)

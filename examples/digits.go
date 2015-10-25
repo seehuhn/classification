@@ -51,13 +51,13 @@ func main() {
 		return
 	}
 
-	b := &tree.Builder{
+	b := &tree.Factory{
 		XValLoss:   loss.ZeroOne,
 		SplitScore: impurity.Gini,
 		PruneScore: impurity.MisclassificationError,
 		K:          5,
 	}
-	tree, est := b.NewFromTrainingData(10, XTrain, YTrain.Column(0), nil)
+	tree, est := b.FromTrainingData(10, XTrain, YTrain.Column(0), nil)
 	fmt.Println(tree)
 	fmt.Println("estimated average loss from cross validation", est)
 
