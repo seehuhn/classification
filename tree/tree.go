@@ -18,7 +18,7 @@ package tree
 
 import (
 	"fmt"
-	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/util"
 	"math"
 	"strings"
@@ -198,18 +198,14 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 	}
 }
 
-// FromTrainingData constructs a new classification tree from a
-// sample of training data.  The function uses the settings from
+// FromData constructs a new classification tree from a sample of
+// training data.  The function uses the settings from
 // `DefaultFactory`.
 //
 // The argument `classes` gives the number of classes in the response
 // variable.  The rows of the matrix `x` are the observations from the
 // training data set, and the corresponding classes are given as the
 // entries of `y` (which must be in the range 0, 1, ..., classes-1).
-//
-// The return values are the new tree and a cross-validated estimate
-// for the average value of the loss function (given by
-// `DefaultFactory.XValLoss`).
-func FromTrainingData(classes int, x *matrix.Float64, response []int, w []float64) (*Tree, float64) {
-	return DefaultFactory.FromTrainingData(classes, x, response, w)
+func FromData(data *data.Data) *Tree {
+	return DefaultFactory.FromData(data)
 }

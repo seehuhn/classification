@@ -1,7 +1,6 @@
 package stop
 
 import (
-	"github.com/seehuhn/classification/util"
 	. "gopkg.in/check.v1"
 	"testing"
 )

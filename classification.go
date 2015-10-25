@@ -3,26 +3,17 @@ package classification
 import (
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/util"
 	"math"
-	"runtime"
 )
 
 type Classifier interface {
 	EstimateClassProbabilities(x []float64) util.Histogram
 }
 
-type TrainingData struct {
-	NumClasses int
-	X          *matrix.Float64
-	Y          []int
-	Weight     []float64
-}
-
 type Factory interface {
 	Name() string
-	FromTrainingData(data *TrainingData) Classifier
+	FromData(*data.Data) Classifier
 }
 
 type Result struct {
@@ -31,31 +22,25 @@ type Result struct {
 	Err      error
 }
 
-func doAssess(cf Factory, samples data.Set, L loss.Function) *Result {
-	numClasses := samples.NumClasses()
-	XTrain, YTrain, err := samples.TrainingSet()
+func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
+	trainingData, err := samples.TrainingData()
 	if err != nil {
 		return &Result{0, 0, err}
 	}
-	data := &TrainingData{
-		NumClasses: numClasses,
-		X:          XTrain,
-		Y:          YTrain,
-	}
-	c := cf.FromTrainingData(data)
+	c := cf.FromData(trainingData)
 
-	XTest, YTest, err := samples.TestSet()
+	testData, err := samples.TestData()
 	if err != nil {
 		return &Result{0, 0, err}
 	}
 
 	cumLoss := 0.0
 	cumLoss2 := 0.0
-	nTest := len(YTest)
+	nTest := len(testData.Y)
 	for i := 0; i < nTest; i++ {
-		row := XTest.Row(i)
+		row := testData.X.Row(i)
 		prob := c.EstimateClassProbabilities(row)
-		l := L(YTest[i], prob)
+		l := L(testData.Y[i], prob)
 		cumLoss += l
 		cumLoss2 += l * l
 	}
@@ -65,25 +50,4 @@ func doAssess(cf Factory, samples data.Set, L loss.Function) *Result {
 	stdErr := math.Sqrt((cumLoss2 - cumLoss*cumLoss) / nn)
 
 	return &Result{cumLoss, stdErr, nil}
-}
-
-var queue chan int
-
-func Assess(cf Factory, samples data.Set, L loss.Function) <-chan *Result {
-	worker := <-queue
-	resChan := make(chan *Result, 1)
-	go func() {
-		res := doAssess(cf, samples, L)
-		resChan <- res
-		queue <- worker
-	}()
-	return resChan
-}
-
-func init() {
-	n := runtime.GOMAXPROCS(0)
-	queue = make(chan int, n)
-	for i := 0; i < n; i++ {
-		queue <- i
-	}
 }

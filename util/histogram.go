@@ -23,12 +23,12 @@ type Histogram []float64
 
 // GetHist counts how many instances of each class are seen in the
 // given rows of the response data: `rows` specifies which entries of
-// `y` to consider, `classes` gives the total number of possible
+// `y` to consider, `numClasses` gives the total number of possible
 // classes, `y` gives the observed classes, and `w` gives the sample
 // weights.  If `w` is nil, weight 1 is used for all samples.  The
 // result is a Histogram of the (weighted) class counts.
-func GetHist(rows []int, classes int, y []int, w []float64) Histogram {
-	hist := make(Histogram, classes)
+func GetHist(rows []int, numClasses int, y []int, w []float64) Histogram {
+	hist := make(Histogram, numClasses)
 	if w == nil {
 		for _, row := range rows {
 			hist[y[row]]++

@@ -29,24 +29,24 @@ func (d *digits) Name() string {
 	return "ZIP code digits"
 }
 
-func (d *digits) NumClasses() int {
-	return 10
+func (d *digits) readFile(fname string) (data *Data, err error) {
+	X, Y, err := matrix.Plain.Read(fname, zipDataColumns)
+	if err != nil {
+		msg := fmt.Sprintf("cannot read %s", fname)
+		return nil, &Error{d.Name(), msg, err}
+	}
+	res := &Data{
+		NumClasses: 10,
+		X:          X,
+		Y:          Y.Column(0),
+	}
+	return res, nil
 }
 
-func (d *digits) TrainingSet() (X *matrix.Float64, Y []int, err error) {
-	XTrain, YTrain, err := matrix.Plain.Read(trainFile, zipDataColumns)
-	if err != nil {
-		msg := fmt.Sprintf("cannot read %s", trainFile)
-		return nil, nil, &Error{d.Name(), msg, err}
-	}
-	return XTrain, YTrain.Column(0), nil
+func (d *digits) TrainingData() (data *Data, err error) {
+	return d.readFile(trainFile)
 }
 
-func (d *digits) TestSet() (X *matrix.Float64, Y []int, err error) {
-	XTest, YTest, err := matrix.Plain.Read(testFile, zipDataColumns)
-	if err != nil {
-		msg := fmt.Sprintf("cannot read %s", testFile)
-		return nil, nil, &Error{d.Name(), msg, err}
-	}
-	return XTest, YTest.Column(0), nil
+func (d *digits) TestData() (data *Data, err error) {
+	return d.readFile(testFile)
 }

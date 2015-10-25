@@ -2,6 +2,7 @@ package bagging
 
 import (
 	"github.com/seehuhn/classification"
+	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/util"
 )
 
@@ -24,7 +25,7 @@ func (f *baggingFactory) Name() string {
 	return f.in.Name() + " (bagged)"
 }
 
-func (f *baggingFactory) FromTrainingData(data *classification.TrainingData) classification.Classifier {
+func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {
 	res := &baggingClassifier{}
 	res.voters = make([]classification.Classifier, f.n)
 	for i := 0; i < f.n; i++ {

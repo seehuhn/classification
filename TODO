@@ -2,7 +2,6 @@ TODO
 ----
 
 - Make tree.Factory implement the classification.Factory interface?
-- Add a new `rows` argument to all `FromTrainingData` functions?
 - Try to split out crossvalidation into its own package.
 - Implement logit regression.
 - Merge the "stop" package into "tree"?  Or make it a sub-package of tree?

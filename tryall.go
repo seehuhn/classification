@@ -11,6 +11,7 @@ import (
 	"github.com/seehuhn/classification/stop"
 	"github.com/seehuhn/classification/tree"
 	"math"
+	"runtime"
 	"strings"
 )
 
@@ -23,10 +24,8 @@ func (tf *TreeFactory) Name() string {
 	return tf.name
 }
 
-func (tf *TreeFactory) FromTrainingData(data *classification.TrainingData) classification.Classifier {
-	tree, _ := tf.builder.FromTrainingData(
-		data.NumClasses, data.X, data.Y, data.Weight)
-	return tree
+func (tf *TreeFactory) FromData(data *data.Data) classification.Classifier {
+	return tf.builder.FromData(data)
 }
 
 func formatVal(x, se float64, width, maxPrec int) string {
@@ -77,7 +76,7 @@ func main() {
 				values: make([]<-chan *classification.Result, len(methods)),
 			}
 			for i, method := range methods {
-				r.values[i] = classification.Assess(method, sample, loss.ZeroOne)
+				r.values[i] = XAssess(method, sample, loss.ZeroOne)
 			}
 			rows <- &r
 		}
@@ -127,4 +126,25 @@ func main() {
 		}
 	}
 	fmt.Println()
+}
+
+var queue chan int
+
+func XAssess(cf classification.Factory, samples data.Set, L loss.Function) <-chan *classification.Result {
+	worker := <-queue
+	resChan := make(chan *classification.Result, 1)
+	go func() {
+		res := classification.Assess(cf, samples, L)
+		resChan <- res
+		queue <- worker
+	}()
+	return resChan
+}
+
+func init() {
+	n := runtime.GOMAXPROCS(0)
+	queue = make(chan int, n)
+	for i := 0; i < n; i++ {
+		queue <- i
+	}
 }

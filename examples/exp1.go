@@ -69,8 +69,8 @@ func main() {
 	builder := &tree.Factory{
 		PruneScore: impurity.Gini,
 	}
-	builder.FromTrainingData(2, x, response, nil)
-	// tree, estLoss := builder.TreeFromTrainingData(2, x, response)
+	builder.FromData(2, x, response, nil)
+	// tree, estLoss := builder.TreeFromData(2, x, response)
 
 	// tree.ForeachLeafRegion(1, func(a, b []float64, hist util.Histogram) {
 	//	ai := a[0]

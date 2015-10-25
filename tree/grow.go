@@ -17,6 +17,7 @@
 package tree
 
 import (
+	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
@@ -70,75 +71,45 @@ var CART = &Factory{
 	K:          10, // p.75
 }
 
-// DefaultFactory specifies the default parameters for
-// constructing a tree; see the `Factory` documentation for the
-// meaning of the individual fields.  The values given in
-// `DefaultFactory` are used by the `FromTrainingData`
-// function, and to replace zero values in a `Factory` structure
-// when the `Factory.FromTrainingData` method is called.
+// DefaultFactory specifies the default parameters for constructing a
+// tree; see the `Factory` documentation for the meaning of the
+// individual fields.  The values given in `DefaultFactory` are used
+// by the `FromData` function, and to replace zero values in a
+// `Factory` structure when the `Factory.FromData` method is called.
 var DefaultFactory = CART
 
-func (b *Factory) setDefaults() {
-	if b.XValLoss == nil {
-		b.XValLoss = DefaultFactory.XValLoss
-	}
-	if b.K == 0 {
-		b.K = DefaultFactory.K
-	}
-	if b.StopGrowth == nil {
-		b.StopGrowth = DefaultFactory.StopGrowth
-	}
-	if b.SplitScore == nil {
-		b.SplitScore = DefaultFactory.SplitScore
-	}
-	if b.PruneScore == nil {
-		b.PruneScore = DefaultFactory.PruneScore
-	}
-}
-
-func (b *Factory) fullTree(x *matrix.Float64, classes int, response []int, w []float64) *Tree {
-	b.setDefaults()
-	rows := intRange(len(response))
-	hist := util.GetHist(rows, classes, response, w)
-	xb := &xFactory{*b, x, classes, response}
-	return xb.getFullTree(rows, hist)
-}
-
-// FromTrainingData constructs a new classification tree from
-// training data.
-//
-// K-fold crossvalidation is used to find the optimal pruning
-// parameter.
-//
-// The return values are the new tree and an estimate for the average
-// value of the loss function (given by `b.XValLoss`).
-func (b *Factory) FromTrainingData(classes int, x *matrix.Float64,
-	response []int, w []float64) (*Tree, float64) {
-	b.setDefaults()
-
-	n, p := x.Shape()
+// FromData constructs a new classification tree from training data.
+func (b *Factory) FromData(data *data.Data) *Tree {
+	n, p := data.X.Shape()
 	if p > maxColumns {
 		panic("too large p")
 	}
-	if len(response) != n {
+	if len(data.Y) != n {
 		panic("dimensions of `x` and `response` don't match")
 	}
+	if data.Rows != nil {
+		n = len(data.Rows)
+	}
+	b = b.setDefaults()
 
-	// generate the full tree
-	tree := b.fullTree(x, classes, response, w)
-	candidates, alpha := b.getCandidates(tree, classes)
+	// step 1: generate the full tree
+	tree := b.fullTree(data)
+	if tree.IsLeaf() {
+		return tree
+	}
+
+	// step 2: generate candidates for a pruned tree
+	candidates, alpha := b.getCandidates(tree, data.NumClasses)
 	loss := make([]float64, len(candidates))
-
 	for k := 0; k < b.K; k++ {
 		learnRows, testRows := getXValSets(k, b.K, n)
 
 		// build the initial tree
-		learnHist := util.GetHist(learnRows, classes, response, w)
-		xb := &xFactory{*b, x, classes, response}
-		tree := xb.getFullTree(learnRows, learnHist)
+		learnHist := util.GetHist(learnRows, data.NumClasses, data.Y, data.Weights)
+		tree := b.getFullTree(data, learnRows, learnHist)
 
 		// get all candidates for pruning the tree
-		XVcandidates, XValpha := b.getCandidates(tree, classes)
+		XVcandidates, XValpha := b.getCandidates(tree, data.NumClasses)
 
 		// for each alpha, assess the expected loss using the test set
 		XVloss := make([]float64, len(XVcandidates))
@@ -150,8 +121,8 @@ func (b *Factory) FromTrainingData(classes int, x *matrix.Float64,
 				tree := XVcandidates[i]
 				cumLoss := 0.0
 				for _, row := range testRows {
-					prob := tree.EstimateClassProbabilities(x.Row(row))
-					val := b.XValLoss(response[row], prob)
+					prob := tree.EstimateClassProbabilities(data.X.Row(row))
+					val := b.XValLoss(data.Y[row], prob)
 					cumLoss += val
 				}
 				XVloss[i] = cumLoss
@@ -161,7 +132,7 @@ func (b *Factory) FromTrainingData(classes int, x *matrix.Float64,
 		}
 	}
 
-	// find the optimal tree
+	// step 3: return the optimal tree
 	bestIdx := 0
 	bestLoss := math.Inf(+1)
 	for j := range candidates {
@@ -170,62 +141,85 @@ func (b *Factory) FromTrainingData(classes int, x *matrix.Float64,
 			bestLoss = loss[j]
 		}
 	}
-
-	return candidates[bestIdx], bestLoss / float64(len(response))
+	return candidates[bestIdx]
 }
 
-type xFactory struct {
-	Factory
-	x        *matrix.Float64
-	classes  int
-	response []int
+func (b *Factory) setDefaults() *Factory {
+	res := *b // make a copy
+	if res.XValLoss == nil {
+		res.XValLoss = DefaultFactory.XValLoss
+	}
+	if res.K == 0 {
+		res.K = DefaultFactory.K
+	}
+	if res.StopGrowth == nil {
+		res.StopGrowth = DefaultFactory.StopGrowth
+	}
+	if res.SplitScore == nil {
+		res.SplitScore = DefaultFactory.SplitScore
+	}
+	if res.PruneScore == nil {
+		res.PruneScore = DefaultFactory.PruneScore
+	}
+	return &res
 }
 
-// potential plan to reduce the amount of sorting required
-//
-// 1. sort rows by col j: i0, i1, i2, ..., in only once
-// 2. split rows: i0, ..., ik | i{k+1}, ..., in as before
-// 3. for every other row:
-//    - old sort order is: i0', i1', ..., in'
-//    - after the split, the order stays the same, but elements are
-//      sorted into two groups.
+func (b *Factory) fullTree(data *data.Data) *Tree {
+	rows := data.Rows
+	if rows == nil {
+		rows = intRange(len(data.Y))
+	}
+	hist := util.GetHist(rows, data.NumClasses, data.Y, data.Weights)
+	return b.getFullTree(data, rows, hist)
+}
 
-func (b *xFactory) getFullTree(rows []int, hist util.Histogram) *Tree {
+func (b *Factory) getFullTree(data *data.Data, rows []int, hist util.Histogram) *Tree {
 	// TODO(voss): use a multi-threaded algorithm?
+
+	// TODO(voss): potential plan to reduce the amount of sorting
+	// required
+	// 1. sort rows by col j: i0, i1, i2, ..., in only once
+	// 2. split rows: i0, ..., ik | i{k+1}, ..., in as before
+	// 3. for every other row:
+	//    - old sort order is: i0', i1', ..., in'
+	//    - after the split, the order stays the same, but elements are
+	//      sorted into two groups.
+	// Is this worth the increase in memory use?
+
 	if b.StopGrowth(hist) {
 		return &Tree{
 			Hist: hist,
 		}
 	}
 
-	best := b.findBestSplit(rows, hist)
+	best := b.findBestSplit(data, rows, hist)
 
 	return &Tree{
 		Hist:       hist,
-		LeftChild:  b.getFullTree(best.Left, best.LeftHist),
-		RightChild: b.getFullTree(best.Right, best.RightHist),
+		LeftChild:  b.getFullTree(data, best.Left, best.LeftHist),
+		RightChild: b.getFullTree(data, best.Right, best.RightHist),
 		Column:     best.Col,
 		Limit:      best.Limit,
 	}
 }
 
-func (b *xFactory) findBestSplit(rows []int, hist util.Histogram) *searchResult {
+func (b *Factory) findBestSplit(data *data.Data, rows []int, hist util.Histogram) *searchResult {
 	best := &searchResult{}
 	first := true
-	_, p := b.x.Shape()
+	_, p := data.X.Shape()
 	for col := 0; col < p; col++ {
 		rows = copyIntSlice(rows)
-		sort.Sort(&colSort{b.x, rows, col})
+		sort.Sort(&colSort{data.X, rows, col})
 
 		leftHist := make(util.Histogram, len(hist))
 		var rightHist = copyFloatSlice(hist)
 		for i := 1; i < len(rows); i++ {
-			yi := b.response[rows[i-1]]
+			yi := data.Y[rows[i-1]]
 			leftHist[yi]++
 			rightHist[yi]--
 
-			left := b.x.At(rows[i-1], col)
-			right := b.x.At(rows[i], col)
+			left := data.X.At(rows[i-1], col)
+			right := data.X.At(rows[i], col)
 			if !(left < right) {
 				continue
 			}

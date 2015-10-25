@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/matrix"
 	. "gopkg.in/check.v1"
@@ -17,23 +18,22 @@ func (*Tests) TestFindBestSplit1(c *C) {
 			response[i] = 1
 		}
 	}
-	data := matrix.NewFloat64(n, 1, 0, raw)
 
-	b := &xFactory{
-		Factory: Factory{
-			SplitScore: impurity.Gini,
-		},
-		x:        data,
-		classes:  2,
-		response: response,
+	b := &Factory{
+		SplitScore: impurity.Gini,
 	}
-	rows := intRange(n)
-	total := make([]float64, b.classes)
-	for _, row := range rows {
-		yi := response[row]
+	theData := &data.Data{
+		NumClasses: 2,
+		X:          matrix.NewFloat64(n, 1, 0, raw),
+		Y:          response,
+		Rows:       intRange(n),
+	}
+	total := make([]float64, theData.NumClasses)
+	for _, row := range theData.Rows {
+		yi := theData.Y[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(rows, total)
+	best := b.findBestSplit(theData, theData.Rows, total)
 	if len(best.Left) != k || len(best.Right) != n-k {
 		c.Error("wrong split: expected", k, "got", len(best.Left))
 	}
@@ -61,23 +61,22 @@ func (*Tests) TestFindBestSplit2(c *C) {
 			pos++
 		}
 	}
-	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
-	b := &xFactory{
-		Factory: Factory{
-			SplitScore: impurity.Gini,
-		},
-		x:        data,
-		classes:  2,
-		response: response,
+	b := &Factory{
+		SplitScore: impurity.Gini,
 	}
-	rows := intRange(n1 * n2)
-	total := make([]float64, b.classes)
-	for _, row := range rows {
+	theData := &data.Data{
+		NumClasses: 2,
+		X:          matrix.NewFloat64(n1*n2, 2, 0, raw),
+		Y:          response,
+		Rows:       intRange(n1 * n2),
+	}
+	total := make([]float64, theData.NumClasses)
+	for _, row := range theData.Rows {
 		yi := response[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(rows, total)
+	best := b.findBestSplit(theData, theData.Rows, total)
 	if len(best.Left) != k2*n1 || len(best.Right) != (n2-k2)*n1 {
 		c.Error("wrong split: expected ", k2*n1, " ", (n2-k2)*n1,
 			" got ", len(best.Left), " ", len(best.Right))
@@ -104,23 +103,22 @@ func (*Tests) TestFindBestSplit3(c *C) {
 			pos++
 		}
 	}
-	data := matrix.NewFloat64(n1*n2, 2, 0, raw)
 
-	b := &xFactory{
-		Factory: Factory{
-			SplitScore: impurity.Gini,
-		},
-		x:        data,
-		classes:  3,
-		response: response,
+	b := &Factory{
+		SplitScore: impurity.Gini,
 	}
-	rows := intRange(n1 * n2)
-	total := make([]float64, b.classes)
-	for _, row := range rows {
-		yi := response[row]
+	theData := &data.Data{
+		NumClasses: 3,
+		X:          matrix.NewFloat64(n1*n2, 2, 0, raw),
+		Y:          response,
+		Rows:       intRange(n1 * n2),
+	}
+	total := make([]float64, theData.NumClasses)
+	for _, row := range theData.Rows {
+		yi := theData.Y[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(rows, total)
+	best := b.findBestSplit(theData, theData.Rows, total)
 	if len(best.Left) != k1*n2 || len(best.Right) != (n1-k1)*n2 {
 		c.Error("wrong split: expected", k1*n2, (n1-k1)*n2,
 			"got", len(best.Left), len(best.Right))
