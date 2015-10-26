@@ -30,15 +30,14 @@ func (tf *TreeFactory) FromData(data *data.Data) classification.Classifier {
 }
 
 func formatVal(x, se float64, width, maxPrec int) string {
-	prec := int(-math.Log10(1.96 * se))
+	prec := int(math.Ceil(-math.Log10(1.96 * se)))
 	if prec > maxPrec {
 		prec = maxPrec
 	}
 	if prec < 0 {
 		prec = 0
 	}
-	t := "%*.*f"
-	t += strings.Repeat(" ", maxPrec-prec)
+	t := "%*.*f" + strings.Repeat(" ", maxPrec-prec)
 	return fmt.Sprintf(t, width+prec-maxPrec, prec, x)
 }
 
@@ -62,7 +61,6 @@ func main() {
 		tree2,
 		bagging.New(tree1, 4, 0),
 		bagging.New(tree1, 16, 0),
-		bagging.New(tree1, 64, 0),
 	}
 
 	testCases := []data.Set{
