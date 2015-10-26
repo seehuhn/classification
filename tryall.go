@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"github.com/seehuhn/classification"
+	"github.com/seehuhn/classification/bagging"
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
@@ -59,6 +60,9 @@ func main() {
 	methods := []classification.Factory{
 		tree1,
 		tree2,
+		bagging.New(tree1, 4, 0),
+		bagging.New(tree1, 16, 0),
+		bagging.New(tree1, 64, 0),
 	}
 
 	testCases := []data.Set{

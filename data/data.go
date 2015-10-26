@@ -8,8 +8,8 @@ type Data struct {
 	NumClasses int
 	X          *matrix.Float64
 	Y          []int
-	Rows       []int
 	Weights    []float64
+	Rows       []int
 }
 
 type Set interface {

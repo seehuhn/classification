@@ -1,43 +1,72 @@
 package bagging
 
 import (
+	"fmt"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/util"
+	"math/rand"
 )
 
-type baggingClassifier struct {
-	voters []classification.Classifier
-}
-
-func (bag *baggingClassifier) EstimateClassProbabilities(x []float64) util.Histogram {
-	// TODO(voss): implement this
-	panic("not implemented")
-	return nil
-}
+const baggingSeed = 1070630982
 
 type baggingFactory struct {
-	in classification.Factory
-	n  int
+	Base      classification.Factory
+	NumVoters int
+	VoterSize int
 }
 
 func (f *baggingFactory) Name() string {
-	return f.in.Name() + " (bagged)"
+	if f.VoterSize == 0 {
+		return fmt.Sprintf("%s, %d-bagged", f.Base.Name(), f.NumVoters)
+	}
+	return fmt.Sprintf("%s, %dx%d-bagged", f.Base.Name(), f.NumVoters, f.VoterSize)
+}
+
+func New(base classification.Factory, numVoters, voterSize int) classification.Factory {
+	return &baggingFactory{
+		Base:      base,
+		NumVoters: numVoters,
+		VoterSize: voterSize,
+	}
 }
 
 func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {
-	res := &baggingClassifier{}
-	res.voters = make([]classification.Classifier, f.n)
-	for i := 0; i < f.n; i++ {
-		// TODO(voss): implement this
-		panic("not implemented")
+	rng := rand.New(rand.NewSource(baggingSeed))
+	n := len(data.Y)
+	voterSize := f.VoterSize
+	if voterSize == 0 {
+		voterSize = n
 	}
+
+	res := make(baggingClassifier, f.NumVoters)
+	newData := *data // make a shallow copy
+	newData.Rows = make([]int, voterSize)
+	for j := range res {
+		for i := range newData.Rows {
+			newData.Rows[i] = rng.Intn(n)
+		}
+		res[j] = f.Base.FromData(&newData)
+	}
+
 	return res
 }
 
-func New(in classification.Factory, n int) classification.Factory {
-	return &baggingFactory{
-		in: in,
-		n:  n,
+type baggingClassifier []classification.Classifier
+
+func (bag baggingClassifier) EstimateClassProbabilities(x []float64) util.Histogram {
+	var res util.Histogram
+	for _, cfr := range bag {
+		p := cfr.EstimateClassProbabilities(x)
+		if res == nil {
+			res = make(util.Histogram, len(p))
+		}
+		for i, pi := range p {
+			res[i] += pi
+		}
 	}
+	for i := range res {
+		res[i] /= float64(len(bag))
+	}
+	return res
 }
