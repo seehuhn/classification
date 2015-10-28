@@ -1,9 +1,13 @@
 TODO
 ----
 
-- Make tree.Factory implement the classification.Factory interface?
+- make tree.Factory implement the classification.Factory interface
 - Try to split out crossvalidation into its own package.
 - Implement logit regression.
 - Merge the "stop" package into "tree"?  Or make it a sub-package of tree?
 - Make the digits dataset download the data and store it in some cache
   directory.  Add more datasets.
+- systematically compare the performance to:
+  * https://github.com/ryanbressler/CloudForest
+  * R packages
+  * scikit learn
