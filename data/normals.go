@@ -15,6 +15,10 @@ type twoNormals struct {
 	testRows  []int
 }
 
+// NewNormals is a factor function which can generate data sets.  The
+// resulting data sets consist of mixtures of two one-dimensional
+// normal distributions, with variance 1, where the means are
+// separated by `delta`.
 func NewNormals(delta float64, nTrain, nTest int) Set {
 	nTotal := nTrain + nTest
 

@@ -178,8 +178,8 @@ func (b *Factory) getFullTree(data *data.Data, rows []int, hist util.Histogram) 
 
 	// TODO(voss): potential plan to reduce the amount of sorting
 	// required
-	// 1. sort rows by col j: i0, i1, i2, ..., in only once
-	// 2. split rows: i0, ..., ik | i{k+1}, ..., in as before
+	// 1. sort rows by col j: i0, i1, i2, ..., i_n only once
+	// 2. split rows: i0, ..., ik | i{k+1}, ..., i_n as before
 	// 3. for every other row:
 	//    - old sort order is: i0', i1', ..., in'
 	//    - after the split, the order stays the same, but elements are

@@ -4,6 +4,7 @@ import (
 	"strings"
 )
 
+// Error objects are returned if construction of a data set fails.
 type Error struct {
 	DataSetName string
 	Message     string

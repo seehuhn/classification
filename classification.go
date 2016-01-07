@@ -7,21 +7,32 @@ import (
 	"math"
 )
 
+// Classifier represents an algorithm for classification, together
+// with the information contributed by a training data set.
 type Classifier interface {
 	EstimateClassProbabilities(x []float64) util.Histogram
 }
 
+// Factory objects encapsulate the logic to construct classifiers from
+// training data sets.
 type Factory interface {
 	Name() string
 	FromData(*data.Data) Classifier
 }
 
+// Result is returned by the `Assess` function to describe the quality
+// of a classifier.
 type Result struct {
 	MeanLoss float64
 	StdErr   float64
 	Err      error
 }
 
+// Assess assesses the quality of a classifier by computing the
+// average loss, using Monte Carlo integration.  `samples` is used to
+// construct trainins and test data, `cf` is used to construct the
+// classifier from a trainings data, and `L` specifies the loss
+// function to assess the cost of wrong classifications.
 func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
 	trainingData, err := samples.TrainingData()
 	if err != nil {

@@ -23,6 +23,9 @@ func zipDataColumns(col int) matrix.ColumnType {
 
 type digits struct{}
 
+// Digits represents a data set of digitised, hand-written digits.
+// The data set is taken from the book "The Elements of Statistical
+// Learning" by Hastie, Tibschirani and Friedman.
 var Digits Set = &digits{}
 
 func (d *digits) Name() string {

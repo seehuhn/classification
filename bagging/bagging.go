@@ -23,6 +23,10 @@ func (f *baggingFactory) Name() string {
 	return fmt.Sprintf("%s, %dx%d-bagged", f.Base.Name(), f.NumVoters, f.VoterSize)
 }
 
+// New constructs a new `classification.Factory`, constructed from the
+// `base` classifier using bagging.  The resulting classifier
+// aggregates the output of `numVoters` individual classifiers, each
+// of which is trained using `voterSize` training samples.
 func New(base classification.Factory, numVoters, voterSize int) classification.Factory {
 	return &baggingFactory{
 		Base:      base,
