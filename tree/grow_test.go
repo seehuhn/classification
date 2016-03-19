@@ -26,14 +26,14 @@ func (*Tests) TestFindBestSplit1(c *C) {
 		NumClasses: 2,
 		X:          matrix.NewFloat64(n, 1, 0, raw),
 		Y:          response,
-		Rows:       intRange(n),
 	}
+	rows := theData.GetRows()
 	total := make([]float64, theData.NumClasses)
-	for _, row := range theData.Rows {
+	for _, row := range rows {
 		yi := theData.Y[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(theData, theData.Rows, total)
+	best := b.findBestSplit(theData, rows, total)
 	if len(best.Left) != k || len(best.Right) != n-k {
 		c.Error("wrong split: expected", k, "got", len(best.Left))
 	}
@@ -69,14 +69,14 @@ func (*Tests) TestFindBestSplit2(c *C) {
 		NumClasses: 2,
 		X:          matrix.NewFloat64(n1*n2, 2, 0, raw),
 		Y:          response,
-		Rows:       intRange(n1 * n2),
 	}
+	rows := theData.GetRows()
 	total := make([]float64, theData.NumClasses)
-	for _, row := range theData.Rows {
+	for _, row := range rows {
 		yi := response[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(theData, theData.Rows, total)
+	best := b.findBestSplit(theData, rows, total)
 	if len(best.Left) != k2*n1 || len(best.Right) != (n2-k2)*n1 {
 		c.Error("wrong split: expected ", k2*n1, " ", (n2-k2)*n1,
 			" got ", len(best.Left), " ", len(best.Right))
@@ -111,14 +111,14 @@ func (*Tests) TestFindBestSplit3(c *C) {
 		NumClasses: 3,
 		X:          matrix.NewFloat64(n1*n2, 2, 0, raw),
 		Y:          response,
-		Rows:       intRange(n1 * n2),
 	}
+	rows := theData.GetRows()
 	total := make([]float64, theData.NumClasses)
-	for _, row := range theData.Rows {
+	for _, row := range rows {
 		yi := theData.Y[row]
 		total[yi]++
 	}
-	best := b.findBestSplit(theData, theData.Rows, total)
+	best := b.findBestSplit(theData, rows, total)
 	if len(best.Left) != k1*n2 || len(best.Right) != (n1-k1)*n2 {
 		c.Error("wrong split: expected", k1*n2, (n1-k1)*n2,
 			"got", len(best.Left), len(best.Right))

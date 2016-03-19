@@ -5,5 +5,6 @@ To get the fuzzing framework::
 
 To run the fuzzing code::
 
+    cd ~/go/src/github.com/seehuhn/classification/tree/fuzzing/
     go-fuzz-build github.com/seehuhn/classification/tree
     go-fuzz -bin=./tree-fuzz.zip -workdir=.

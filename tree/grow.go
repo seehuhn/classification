@@ -165,26 +165,13 @@ func (b *Factory) setDefaults() *Factory {
 }
 
 func (b *Factory) fullTree(data *data.Data) *Tree {
-	rows := data.Rows
-	if rows == nil {
-		rows = intRange(len(data.Y))
-	}
+	rows := data.GetRows()
 	hist := util.GetHist(rows, data.NumClasses, data.Y, data.Weights)
 	return b.getFullTree(data, rows, hist)
 }
 
 func (b *Factory) getFullTree(data *data.Data, rows []int, hist util.Histogram) *Tree {
 	// TODO(voss): use a multi-threaded algorithm?
-
-	// TODO(voss): potential plan to reduce the amount of sorting
-	// required
-	// 1. sort rows by col j: i0, i1, i2, ..., i_n only once
-	// 2. split rows: i0, ..., ik | i{k+1}, ..., i_n as before
-	// 3. for every other row:
-	//    - old sort order is: i0', i1', ..., in'
-	//    - after the split, the order stays the same, but elements are
-	//      sorted into two groups.
-	// Is this worth the increase in memory use?
 
 	if b.StopGrowth(hist) {
 		return &Tree{
