@@ -99,7 +99,7 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 	}
 
 	// step 2: generate candidates for a pruned tree
-	candidates, alpha := b.getCandidates(tree, data.NumClasses)
+	candidates, alpha := b.getCandidates(tree)
 	loss := make([]float64, len(candidates))
 	for k := 0; k < b.K; k++ {
 		learnRows, testRows := getXValSets(k, b.K, n)
@@ -109,7 +109,7 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 		tree := b.getFullTree(data, learnRows, learnHist)
 
 		// get all candidates for pruning the tree
-		XVcandidates, XValpha := b.getCandidates(tree, data.NumClasses)
+		XVcandidates, XValpha := b.getCandidates(tree)
 
 		// for each alpha, assess the expected loss using the test set
 		XVloss := make([]float64, len(XVcandidates))

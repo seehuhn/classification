@@ -30,7 +30,7 @@ func (b *Factory) initialPrune(tree *Tree) float64 {
 
 // getCandidates returns the candidate trees for pruning, and the
 // corresponding critical values for the tuning parameter alpha.
-func (b *Factory) getCandidates(tree *Tree, classes int) ([]*Tree, []float64) {
+func (b *Factory) getCandidates(tree *Tree) ([]*Tree, []float64) {
 	// TODO(voss): the repeated calls to findWeakestLink compute many
 	// link strengths repeatedly.  Is it worth the effort to cache the
 	// results (and update along the path toward the root when
