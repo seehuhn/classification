@@ -103,15 +103,14 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 	for k := 0; k < b.K; k++ {
 		xValSet := data.GetXValSet(xValSeed, b.K, k)
 
-		// build the initial tree
+		// Build the initial tree using the training data.
 		trainingData, _ := xValSet.TrainingData()
-		trainingHist := trainingData.GetHist()
-		tree := b.getFullTree(trainingData, trainingHist)
+		tree := b.fullTree(trainingData)
 
-		// get all candidates for pruning the tree
+		// Get all candidates for pruning the tree.
 		XVcandidates, XValpha := b.getCandidates(tree)
 
-		// for each alpha, assess the expected loss using the test set
+		// Assess the expected loss of each candidate using the test data.
 		testData, _ := xValSet.TestData()
 		testRows := testData.GetRows()
 		XVloss := make([]float64, len(XVcandidates))
