@@ -3,14 +3,13 @@ package classification
 import (
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/util"
 	"math"
 )
 
 // Classifier represents an algorithm for classification, together
 // with the information contributed by a training data set.
 type Classifier interface {
-	EstimateClassProbabilities(x []float64) util.Histogram
+	EstimateClassProbabilities(x []float64) data.Histogram
 }
 
 // Factory objects encapsulate the logic to construct classifiers from

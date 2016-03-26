@@ -17,7 +17,7 @@
 package impurity
 
 import (
-	"github.com/seehuhn/classification/util"
+	"github.com/seehuhn/classification/data"
 	"math"
 )
 
@@ -30,13 +30,13 @@ import (
 // The output of a `Function` should scale linearly with the input
 // vector, i.e. if the all entries of the input vector are doubled,
 // the output value should double, too.
-type Function func(util.Histogram) float64
+type Function func(data.Histogram) float64
 
 // Gini implements the Gini impurity function, i.e. the sum of
 // pi*(1-pi) over all classes, where pi is the proportion of class i
 // in the sample.  The returned value is the total sample size times
 // the Gini function value.
-func Gini(hist util.Histogram) float64 {
+func Gini(hist data.Histogram) float64 {
 	var res float64
 	n := hist.Sum()
 	for _, ni := range hist {
@@ -49,7 +49,7 @@ func Gini(hist util.Histogram) float64 {
 
 // Entropy returns the entropy of the sample, multiplied with the
 // total samples size.
-func Entropy(hist util.Histogram) float64 {
+func Entropy(hist data.Histogram) float64 {
 	var res float64
 	total := hist.Sum()
 	for _, ni := range hist {
@@ -65,7 +65,7 @@ func Entropy(hist util.Histogram) float64 {
 
 // MisclassificationError returns the number of mis-classified values
 // in the sample.
-func MisclassificationError(hist util.Histogram) float64 {
+func MisclassificationError(hist data.Histogram) float64 {
 	total := 0.0
 	max := 0.0
 	for _, ni := range hist {

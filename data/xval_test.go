@@ -21,7 +21,7 @@ func (*Tests) TestXValClasses(c *C) {
 		for _, K := range []int{2, 3, 4, 5} {
 			allTests := []int{}
 			for k := 0; k < K; k++ {
-				set := data.GetXValSet(seed, k, K)
+				set := data.GetXValSet(seed, K, k)
 				td, err := set.TrainingData()
 				c.Assert(err, IsNil)
 				trainingRows := td.GetRows()

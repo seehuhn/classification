@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/util"
 	"math/rand"
 )
 
@@ -58,12 +57,12 @@ func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {
 
 type baggingClassifier []classification.Classifier
 
-func (bag baggingClassifier) EstimateClassProbabilities(x []float64) util.Histogram {
-	var res util.Histogram
+func (bag baggingClassifier) EstimateClassProbabilities(x []float64) data.Histogram {
+	var res data.Histogram
 	for _, cfr := range bag {
 		p := cfr.EstimateClassProbabilities(x)
 		if res == nil {
-			res = make(util.Histogram, len(p))
+			res = make(data.Histogram, len(p))
 		}
 		for i, pi := range p {
 			res[i] += pi

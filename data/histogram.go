@@ -1,4 +1,5 @@
-// util.go - Auxiliary functions for github.com/seehuhn/classification
+// histogram.go - compute the frequency of samples in a data set
+//
 // Copyright (C) 2015  Jochen Voss <voss@seehuhn.de>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package util
+package data
 
 // Histogram is the type used to represent class counts in a sample.
 // The counts are stored as float64 values to allow for samples with
@@ -22,27 +23,25 @@ package util
 type Histogram []float64
 
 // GetHist counts how many instances of each class are seen in the
-// given rows of the response data: `rows` specifies which entries of
-// `y` to consider, `numClasses` gives the total number of possible
-// classes, `y` gives the observed classes, and `w` gives the sample
-// weights.  If `w` is nil, weight 1 is used for all samples.  The
-// result is a Histogram of the (weighted) class counts.
-func GetHist(rows []int, numClasses int, y []int, w []float64) Histogram {
-	hist := make(Histogram, numClasses)
-	if w == nil {
+// given rows of the response data.
+func (data *Data) GetHist() Histogram {
+	hist := make(Histogram, data.NumClasses)
+	rows := data.GetRows()
+	y := data.Y
+	if data.Weights == nil {
 		for _, row := range rows {
 			hist[y[row]]++
 		}
 	} else {
 		for _, row := range rows {
-			hist[y[row]] += w[row]
+			hist[y[row]] += data.Weights[row]
 		}
 	}
 	return hist
 }
 
-// Sum returns the total number of samples corresponding to the
-// histogram, obtained by adding up all entries of `hist`.
+// Sum returns the total number of samples covered in the histogram,
+// obtained by adding up all entries of `hist`.
 func (hist Histogram) Sum() float64 {
 	res := 0.0
 	for _, ni := range hist {

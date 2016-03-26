@@ -19,7 +19,6 @@ package tree
 import (
 	"fmt"
 	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/util"
 	"math"
 	"strings"
 )
@@ -32,7 +31,7 @@ const maxColumns = 10000
 type Tree struct {
 	// Hist gives the frequencies of the different reponses in the
 	// training set, for this sub-tree.
-	Hist util.Histogram
+	Hist data.Histogram
 
 	// LeftChild points to the left subtree attached to this node.
 	// For leaf nodes this is nil.
@@ -77,7 +76,7 @@ func (t *Tree) Format() string {
 func (t *Tree) String() string {
 	nodes := 0
 	maxDepth := 0
-	t.ForeachLeaf(func(_ util.Histogram, depth int) {
+	t.ForeachLeaf(func(_ data.Histogram, depth int) {
 		if depth > maxDepth {
 			maxDepth = depth
 		}
@@ -119,13 +118,13 @@ func (t *Tree) lookup(x []float64) *Tree {
 
 // GetClassCounts returns the class counts for input `x`, as seen in
 // the training data.
-func (t *Tree) GetClassCounts(x []float64) util.Histogram {
+func (t *Tree) GetClassCounts(x []float64) data.Histogram {
 	return t.lookup(x).Hist
 }
 
 // EstimateClassProbabilities returns the estimated class
 // probabilities for input `x`.
-func (t *Tree) EstimateClassProbabilities(x []float64) util.Histogram {
+func (t *Tree) EstimateClassProbabilities(x []float64) data.Histogram {
 	return t.lookup(x).Hist.Probabilities()
 }
 
@@ -146,11 +145,11 @@ func (t *Tree) walkPostOrder(fn func(*Tree, int), depth int) {
 // the tree `t`.  The arguments to `fn` are the class counts for the
 // samples corresponding to the node, and the depth of the node in the
 // tree.
-func (t *Tree) ForeachLeaf(fn func(hist util.Histogram, depth int)) {
+func (t *Tree) ForeachLeaf(fn func(hist data.Histogram, depth int)) {
 	t.foreachLeafRecursive(0, fn)
 }
 
-func (t *Tree) foreachLeafRecursive(depth int, fn func(util.Histogram, int)) {
+func (t *Tree) foreachLeafRecursive(depth int, fn func(data.Histogram, int)) {
 	if t.LeftChild != nil {
 		t.LeftChild.foreachLeafRecursive(depth+1, fn)
 		t.RightChild.foreachLeafRecursive(depth+1, fn)
@@ -168,7 +167,7 @@ func (t *Tree) foreachLeafRecursive(depth int, fn func(util.Histogram, int)) {
 // samples corresponding to the node, as well as the depth of the node
 // in the tree.
 func (t *Tree) ForeachLeafRegion(
-	fn func(a, b []float64, hist util.Histogram, depth int)) {
+	fn func(a, b []float64, hist data.Histogram, depth int)) {
 	p := t.NumClasses()
 	a := make([]float64, p)
 	b := make([]float64, p)
@@ -180,7 +179,7 @@ func (t *Tree) ForeachLeafRegion(
 }
 
 func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
-	fn func(a, b []float64, hist util.Histogram, depth int)) {
+	fn func(a, b []float64, hist data.Histogram, depth int)) {
 	if t.IsLeaf() {
 		fn(a, b, t.Hist, depth)
 	} else {

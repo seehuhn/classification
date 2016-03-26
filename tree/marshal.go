@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"github.com/seehuhn/classification/util"
+	"github.com/seehuhn/classification/data"
 	"io"
 )
 
@@ -191,7 +191,7 @@ func readBinaryTree(buf *bufio.Reader, p int) (*Tree, error) {
 
 	if nodeType == 0 {
 		// 5: histogram counts
-		t.Hist = make(util.Histogram, p)
+		t.Hist = make(data.Histogram, p)
 		for i := 0; i < p; i++ {
 			err = binary.Read(buf, binary.LittleEndian, &t.Hist[i])
 			if err != nil {
@@ -227,7 +227,7 @@ func readBinaryTree(buf *bufio.Reader, p int) (*Tree, error) {
 			return nil, err
 		}
 
-		t.Hist = make(util.Histogram, p)
+		t.Hist = make(data.Histogram, p)
 		for i := 0; i < p; i++ {
 			t.Hist[i] = t.LeftChild.Hist[i] + t.RightChild.Hist[i]
 		}

@@ -22,7 +22,6 @@ import (
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/stop"
-	"github.com/seehuhn/classification/util"
 	"math"
 	"sort"
 )
@@ -102,16 +101,19 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 	candidates, alpha := b.getCandidates(tree)
 	loss := make([]float64, len(candidates))
 	for k := 0; k < b.K; k++ {
-		learnRows, testRows := getXValSets(k, b.K, n)
+		xValSet := data.GetXValSet(xValSeed, b.K, k)
 
 		// build the initial tree
-		learnHist := util.GetHist(learnRows, data.NumClasses, data.Y, data.Weights)
-		tree := b.getFullTree(data, learnRows, learnHist)
+		trainingData, _ := xValSet.TrainingData()
+		trainingHist := trainingData.GetHist()
+		tree := b.getFullTree(trainingData, trainingHist)
 
 		// get all candidates for pruning the tree
 		XVcandidates, XValpha := b.getCandidates(tree)
 
 		// for each alpha, assess the expected loss using the test set
+		testData, _ := xValSet.TestData()
+		testRows := testData.GetRows()
 		XVloss := make([]float64, len(XVcandidates))
 		XVlossDone := make([]bool, len(XVcandidates))
 		for j := range candidates {
@@ -121,8 +123,8 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 				tree := XVcandidates[i]
 				cumLoss := 0.0
 				for _, row := range testRows {
-					prob := tree.EstimateClassProbabilities(data.X.Row(row))
-					val := b.XValLoss(data.Y[row], prob)
+					prob := tree.EstimateClassProbabilities(testData.X.Row(row))
+					val := b.XValLoss(testData.Y[row], prob)
 					cumLoss += val
 				}
 				XVloss[i] = cumLoss
@@ -165,48 +167,58 @@ func (b *Factory) setDefaults() *Factory {
 }
 
 func (b *Factory) fullTree(data *data.Data) *Tree {
-	rows := data.GetRows()
-	hist := util.GetHist(rows, data.NumClasses, data.Y, data.Weights)
-	return b.getFullTree(data, rows, hist)
+	hist := data.GetHist()
+	return b.getFullTree(data, hist)
 }
 
-func (b *Factory) getFullTree(data *data.Data, rows []int, hist util.Histogram) *Tree {
-	// TODO(voss): use a multi-threaded algorithm?
-
+func (b *Factory) getFullTree(data *data.Data, hist data.Histogram) *Tree {
 	if b.StopGrowth(hist) {
 		return &Tree{
 			Hist: hist,
 		}
 	}
 
-	best := b.findBestSplit(data, rows, hist)
+	best := b.findBestSplit(data, hist)
 
 	return &Tree{
 		Hist:       hist,
-		LeftChild:  b.getFullTree(data, best.Left, best.LeftHist),
-		RightChild: b.getFullTree(data, best.Right, best.RightHist),
+		LeftChild:  b.getFullTree(best.Left, best.LeftHist),
+		RightChild: b.getFullTree(best.Right, best.RightHist),
 		Column:     best.Col,
 		Limit:      best.Limit,
 	}
 }
 
-func (b *Factory) findBestSplit(data *data.Data, rows []int, hist util.Histogram) *searchResult {
-	best := &searchResult{}
+func (b *Factory) findBestSplit(d *data.Data, hist data.Histogram) *searchResult {
+	best := &searchResult{
+		Left: &data.Data{
+			NumClasses: d.NumClasses,
+			X:          d.X,
+			Y:          d.Y,
+			Weights:    d.Weights,
+		},
+		Right: &data.Data{
+			NumClasses: d.NumClasses,
+			X:          d.X,
+			Y:          d.Y,
+			Weights:    d.Weights,
+		},
+	}
 	first := true
-	_, p := data.X.Shape()
+	p := d.NCol()
 	for col := 0; col < p; col++ {
-		rows = copyIntSlice(rows)
-		sort.Sort(&colSort{data.X, rows, col})
+		rows := copyIntSlice(d.GetRows())
+		sort.Sort(&colSort{d.X, rows, col})
 
-		leftHist := make(util.Histogram, len(hist))
+		leftHist := make(data.Histogram, len(hist))
 		var rightHist = copyFloatSlice(hist)
 		for i := 1; i < len(rows); i++ {
-			yi := data.Y[rows[i-1]]
-			leftHist[yi]++
+			yi := d.Y[rows[i-1]]
+			leftHist[yi]++ // TODO(voss): use the weights here!
 			rightHist[yi]--
 
-			left := data.X.At(rows[i-1], col)
-			right := data.X.At(rows[i], col)
+			left := d.X.At(rows[i-1], col)
+			right := d.X.At(rows[i], col)
 			if !(left < right) {
 				continue
 			}
@@ -219,8 +231,8 @@ func (b *Factory) findBestSplit(data *data.Data, rows []int, hist util.Histogram
 			if first || score < best.Score {
 				best.Col = col
 				best.Limit = limit
-				best.Left = rows[:i]
-				best.Right = rows[i:]
+				best.Left.Rows = rows[:i]
+				best.Right.Rows = rows[i:]
 				best.LeftHist = copyFloatSlice(leftHist)
 				best.RightHist = copyFloatSlice(rightHist)
 				best.Score = score
@@ -234,8 +246,8 @@ func (b *Factory) findBestSplit(data *data.Data, rows []int, hist util.Histogram
 type searchResult struct {
 	Col                 int
 	Limit               float64
-	Left, Right         []int
-	LeftHist, RightHist util.Histogram
+	Left, Right         *data.Data
+	LeftHist, RightHist data.Histogram
 	Score               float64
 }
 
