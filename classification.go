@@ -29,8 +29,8 @@ type Result struct {
 
 // Assess assesses the quality of a classifier by computing the
 // average loss, using Monte Carlo integration.  `samples` is used to
-// construct trainins and test data, `cf` is used to construct the
-// classifier from a trainings data, and `L` specifies the loss
+// construct training and test data, `cf` is used to construct the
+// classifier from a training data, and `L` specifies the loss
 // function to assess the cost of wrong classifications.
 func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
 	trainingData, err := samples.TrainingData()
