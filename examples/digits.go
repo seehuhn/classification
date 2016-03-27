@@ -49,15 +49,15 @@ func main() {
 	}
 	cumLoss := 0.0
 	cumLoss2 := 0.0
-	nTest := len(testData.Y)
-	for i := 0; i < nTest; i++ {
-		row := testData.X.Row(i)
-		prob := tree.EstimateClassProbabilities(row)
+	rows := testData.GetRows()
+	for _, i := range rows {
+		sample := testData.X.Row(i)
+		prob := tree.EstimateClassProbabilities(sample)
 		l := b.XValLoss(testData.Y[i], prob)
 		cumLoss += l
 		cumLoss2 += l * l
 	}
-	nn := float64(nTest)
+	nn := float64(len(rows))
 	cumLoss /= nn
 	cumLoss2 /= nn
 	stdErr := math.Sqrt((cumLoss2 - cumLoss*cumLoss) / nn)

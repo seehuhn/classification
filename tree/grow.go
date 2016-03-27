@@ -26,6 +26,8 @@ import (
 	"sort"
 )
 
+const xValSeed = 1769149487
+
 // Factory is a structure to store the parameters governing the
 // growing and pruning of classification trees.  Any zero field values
 // are interpreted as the corresponding values from the
@@ -79,17 +81,12 @@ var DefaultFactory = CART
 
 // FromData constructs a new classification tree from training data.
 func (b *Factory) FromData(data *data.Data) *Tree {
-	n, p := data.X.Shape()
+	b = b.setDefaults()
+
+	p := data.NCol()
 	if p > maxColumns {
 		panic("too large p")
 	}
-	if len(data.Y) != n {
-		panic("dimensions of `x` and `response` don't match")
-	}
-	if data.Rows != nil {
-		n = len(data.Rows)
-	}
-	b = b.setDefaults()
 
 	// step 1: generate the full tree
 	tree := b.fullTree(data)
@@ -110,7 +107,7 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 		// Get all candidates for pruning the tree.
 		XVcandidates, XValpha := b.getCandidates(tree)
 
-		// Assess the expected loss of each candidate using the test data.
+		// Assess the expected loss of each candidate, using the test data.
 		testData, _ := xValSet.TestData()
 		testRows := testData.GetRows()
 		XVloss := make([]float64, len(XVcandidates))

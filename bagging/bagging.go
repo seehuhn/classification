@@ -5,6 +5,7 @@ import (
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/data"
 	"math/rand"
+	"runtime"
 )
 
 const baggingSeed = 1070630982
@@ -35,23 +36,33 @@ func New(base classification.Factory, numVoters, voterSize int) classification.F
 }
 
 func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {
-	rng := rand.New(rand.NewSource(baggingSeed))
-	n := len(data.Y)
 	voterSize := f.VoterSize
 	if voterSize == 0 {
-		voterSize = n
+		voterSize = data.NRow()
+	}
+
+	numWorkers := runtime.NumCPU()
+	jobs := make(chan int64, f.NumVoters)
+	for i := 0; i < f.NumVoters; i++ {
+		jobs <- baggingSeed + int64(i)
+	}
+	close(jobs)
+
+	results := make(chan classification.Classifier)
+	for j := 0; j < numWorkers; j++ {
+		go func() {
+			for seed := range jobs {
+				rng := rand.New(rand.NewSource(seed))
+				sample := data.SampleWithReplacement(rng, voterSize)
+				results <- f.Base.FromData(sample)
+			}
+		}()
 	}
 
 	res := make(baggingClassifier, f.NumVoters)
-	newData := *data // make a shallow copy
-	newData.Rows = make([]int, voterSize)
-	for j := range res {
-		for i := range newData.Rows {
-			newData.Rows[i] = rng.Intn(n)
-		}
-		res[j] = f.Base.FromData(&newData)
+	for i := range res {
+		res[i] = <-results
 	}
-
 	return res
 }
 

@@ -27,11 +27,11 @@ type Result struct {
 	Err      error
 }
 
-// Assess assesses the quality of a classifier by computing the
+// Assess estimates the quality of a classifier by computing the
 // average loss, using Monte Carlo integration.  `samples` is used to
 // construct training and test data, `cf` is used to construct the
-// classifier from a training data, and `L` specifies the loss
-// function to assess the cost of wrong classifications.
+// classifier from training data, and `L` specifies the loss function
+// to assess the cost of wrong classifications.
 func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
 	trainingData, err := samples.TrainingData()
 	if err != nil {
@@ -43,21 +43,20 @@ func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
 	if err != nil {
 		return &Result{0, 0, err}
 	}
-
 	cumLoss := 0.0
 	cumLoss2 := 0.0
-	nTest := len(testData.Y)
-	for i := 0; i < nTest; i++ {
-		row := testData.X.Row(i)
-		prob := c.EstimateClassProbabilities(row)
+	rows := testData.GetRows()
+	for _, i := range rows {
+		sample := testData.X.Row(i)
+		prob := c.EstimateClassProbabilities(sample)
 		l := L(testData.Y[i], prob)
 		cumLoss += l
 		cumLoss2 += l * l
 	}
-	nn := float64(nTest)
+	nn := float64(len(rows))
 	cumLoss /= nn
 	cumLoss2 /= nn
-	stdErr := math.Sqrt((cumLoss2 - cumLoss*cumLoss) / nn)
+	stdErr := math.Sqrt((cumLoss2 - cumLoss*cumLoss) / (nn - 1))
 
 	return &Result{cumLoss, stdErr, nil}
 }
