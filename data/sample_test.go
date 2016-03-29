@@ -15,7 +15,7 @@ func (*Tests) TestSubset(c *C) {
 	data := NewEmpty(2, n, 0)
 	count := make([]uint, n)
 	for i := 0; i < N; i++ {
-		subset := data.SampleWithoutReplacement(rng, m)
+		subset := data.SampleWithoutReplacement(m, rng)
 		rows := subset.GetRows()
 		c.Assert(len(rows), Equals, m)
 		c.Assert(rows[0], Not(Equals), rows[1])

@@ -10,37 +10,58 @@ import (
 
 const baggingSeed = 1070630982
 
-type baggingFactory struct {
-	Base      classification.Factory
-	NumVoters int
-	VoterSize int
+type RandomFactory interface {
+	Name() string
+	FromDataRandom(d *data.Data, rng *rand.Rand) classification.Classifier
 }
 
-func (f *baggingFactory) Name() string {
-	if f.VoterSize == 0 {
-		return fmt.Sprintf("%s, %d-bagged", f.Base.Name(), f.NumVoters)
+type randomize struct {
+	base      classification.Factory
+	voterSize int
+}
+
+func (f randomize) Name() string {
+	return "random " + f.base.Name()
+}
+
+func (f randomize) FromDataRandom(d *data.Data, rng *rand.Rand) classification.Classifier {
+	voterSize := f.voterSize
+	if voterSize == 0 {
+		voterSize = d.NRow()
 	}
-	return fmt.Sprintf("%s, %dx%d-bagged", f.Base.Name(), f.NumVoters, f.VoterSize)
+
+	sample := d.SampleWithReplacement(voterSize, rng)
+	return f.base.FromData(sample)
 }
 
-// New constructs a new `classification.Factory`, constructed from the
-// `base` classifier using bagging.  The resulting classifier
+// New constructs a new `classification.Factory`, using the `base`
+// classifier together with bagging.  The resulting classifier
 // aggregates the output of `numVoters` individual classifiers, each
 // of which is trained using `voterSize` training samples.
 func New(base classification.Factory, numVoters, voterSize int) classification.Factory {
 	return &baggingFactory{
-		Base:      base,
+		Base:      randomize{base, voterSize},
 		NumVoters: numVoters,
-		VoterSize: voterSize,
 	}
 }
 
-func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {
-	voterSize := f.VoterSize
-	if voterSize == 0 {
-		voterSize = data.NRow()
+func NewFromRandom(base RandomFactory, numVoters int) classification.Factory {
+	return &baggingFactory{
+		Base:      base,
+		NumVoters: numVoters,
 	}
+}
 
+type baggingFactory struct {
+	Base      RandomFactory
+	NumVoters int
+}
+
+func (f *baggingFactory) Name() string {
+	return fmt.Sprintf("%s, %d-bagged", f.Base.Name(), f.NumVoters)
+}
+
+func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {
 	numWorkers := runtime.NumCPU()
 	jobs := make(chan int64, f.NumVoters)
 	for i := 0; i < f.NumVoters; i++ {
@@ -53,8 +74,7 @@ func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {
 		go func() {
 			for seed := range jobs {
 				rng := rand.New(rand.NewSource(seed))
-				sample := data.SampleWithReplacement(rng, voterSize)
-				results <- f.Base.FromData(sample)
+				results <- f.Base.FromDataRandom(data, rng)
 			}
 		}()
 	}
@@ -70,6 +90,7 @@ type baggingClassifier []classification.Classifier
 
 func (bag baggingClassifier) EstimateClassProbabilities(x []float64) data.Histogram {
 	var res data.Histogram
+	// TODO(voss): should averages take leaf size into account for trees?
 	for _, cfr := range bag {
 		p := cfr.EstimateClassProbabilities(x)
 		if res == nil {

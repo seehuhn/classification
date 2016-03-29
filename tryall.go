@@ -7,6 +7,7 @@ import (
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/bagging"
 	"github.com/seehuhn/classification/data"
+	"github.com/seehuhn/classification/forest"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/stop"
@@ -56,11 +57,31 @@ func main() {
 		K:          10,
 	}
 	tree2 := &TreeFactory{"other CART", tree2builder}
+	forest1 := &forest.RandomForestFactory{
+		RandomTree: forest.RandomTree{
+			NumSamples: 0.7,
+			NumLeaves:  20,
+			NumColumns: 0,
+			SplitScore: impurity.Gini,
+		},
+		NumTrees: 1000,
+	}
+	forest2 := &forest.RandomForestFactory{
+		RandomTree: forest.RandomTree{
+			NumSamples: 0.7,
+			NumLeaves:  40,
+			NumColumns: 0,
+			SplitScore: impurity.Gini,
+		},
+		NumTrees: 1000,
+	}
 	methods := []classification.Factory{
 		tree1,
 		tree2,
 		bagging.New(tree1, 4, 0),
 		bagging.New(tree1, 16, 0),
+		forest1.New(),
+		forest2.New(),
 	}
 
 	testCases := []data.Set{
