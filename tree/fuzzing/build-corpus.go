@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/seehuhn/classification/tree"
 	"math"
 	"os"
 	"path/filepath"
+
+	"github.com/seehuhn/classification/tree"
 )
 
 var fileIndex int

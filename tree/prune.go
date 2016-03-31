@@ -1,8 +1,9 @@
 package tree
 
 import (
-	"github.com/seehuhn/classification/impurity"
 	"math"
+
+	"github.com/seehuhn/classification/impurity"
 )
 
 const epsilon = 1e-6

@@ -5,14 +5,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/tree"
 	"log"
 	"math"
 	"os"
 	"runtime/pprof"
+
+	"github.com/seehuhn/classification/data"
+	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/loss"
+	"github.com/seehuhn/classification/tree"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

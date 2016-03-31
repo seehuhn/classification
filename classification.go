@@ -1,9 +1,10 @@
 package classification
 
 import (
+	"math"
+
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/loss"
-	"math"
 )
 
 // Classifier represents an algorithm for classification, together

@@ -4,6 +4,10 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"runtime"
+	"strings"
+
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/bagging"
 	"github.com/seehuhn/classification/data"
@@ -12,9 +16,6 @@ import (
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/stop"
 	"github.com/seehuhn/classification/tree"
-	"math"
-	"runtime"
-	"strings"
 )
 
 type TreeFactory struct {

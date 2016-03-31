@@ -1,9 +1,10 @@
 package data
 
 import (
+	"sort"
+
 	"github.com/seehuhn/classification/matrix"
 	. "gopkg.in/check.v1"
-	"sort"
 )
 
 func dummyData(n int) *Data {

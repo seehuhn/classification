@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+
 	"github.com/seehuhn/classification/matrix"
 )
 

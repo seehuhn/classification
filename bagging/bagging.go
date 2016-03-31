@@ -2,10 +2,11 @@ package bagging
 
 import (
 	"fmt"
-	"github.com/seehuhn/classification"
-	"github.com/seehuhn/classification/data"
 	"math/rand"
 	"runtime"
+
+	"github.com/seehuhn/classification"
+	"github.com/seehuhn/classification/data"
 )
 
 const baggingSeed = 1070630982

@@ -20,15 +20,16 @@ package main
 
 import (
 	"flag"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/matrix"
-	"github.com/seehuhn/classification/tree"
-	"github.com/seehuhn/mt19937"
 	"log"
 	"math/rand"
 	"os"
 	"runtime/pprof"
 	"time"
+
+	"github.com/seehuhn/classification/impurity"
+	"github.com/seehuhn/classification/matrix"
+	"github.com/seehuhn/classification/tree"
+	"github.com/seehuhn/mt19937"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

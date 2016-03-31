@@ -2,9 +2,10 @@ package data
 
 import (
 	"fmt"
+	"math/rand"
+
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/mt19937"
-	"math/rand"
 )
 
 type twoNormals struct {

@@ -3,6 +3,7 @@ package tree
 import (
 	"bytes"
 	"encoding"
+
 	. "gopkg.in/check.v1"
 )
 

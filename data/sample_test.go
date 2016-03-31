@@ -1,8 +1,9 @@
 package data
 
 import (
-	. "gopkg.in/check.v1"
 	"math/rand"
+
+	. "gopkg.in/check.v1"
 )
 
 func (*Tests) TestSubset(c *C) {

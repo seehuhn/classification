@@ -1,9 +1,10 @@
 package tree
 
 import (
+	"math"
+
 	"github.com/seehuhn/classification/impurity"
 	. "gopkg.in/check.v1"
-	"math"
 )
 
 func (*Tests) TestInitialPrune(c *C) {

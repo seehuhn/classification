@@ -2,11 +2,12 @@ package forest
 
 import (
 	"fmt"
+	"math/rand"
+
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/tree"
-	"math/rand"
 )
 
 type RandomTree struct {

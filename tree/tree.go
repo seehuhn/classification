@@ -18,9 +18,10 @@ package tree
 
 import (
 	"fmt"
-	"github.com/seehuhn/classification/data"
 	"math"
 	"strings"
+
+	"github.com/seehuhn/classification/data"
 )
 
 // To prevent excessive memory use, the number of columns is limited

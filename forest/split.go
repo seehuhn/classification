@@ -1,11 +1,12 @@
 package forest
 
 import (
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/matrix"
 	"math"
 	"math/rand"
 	"sort"
+
+	"github.com/seehuhn/classification/data"
+	"github.com/seehuhn/classification/matrix"
 )
 
 func (f *RandomTree) findBestSplit(rng *rand.Rand, d *data.Data, hist data.Histogram) *searchResult {

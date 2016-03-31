@@ -5,8 +5,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"github.com/seehuhn/classification/data"
 	"io"
+
+	"github.com/seehuhn/classification/data"
 )
 
 // ErrTreeEncoding is returned by `Tree.UnmarshalBinary` if the input

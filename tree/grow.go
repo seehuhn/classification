@@ -17,13 +17,14 @@
 package tree
 
 import (
+	"math"
+	"sort"
+
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/stop"
-	"math"
-	"sort"
 )
 
 const xValSeed = 1769149487

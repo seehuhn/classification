@@ -17,8 +17,9 @@
 package impurity
 
 import (
-	"github.com/seehuhn/classification/data"
 	"math"
+
+	"github.com/seehuhn/classification/data"
 )
 
 // Function is the type of functions used to compute impurity measures
