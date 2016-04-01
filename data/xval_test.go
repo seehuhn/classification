@@ -20,7 +20,7 @@ func (*Tests) TestXValClasses(c *C) {
 	for _, n := range []int{5, 49, 50, 51} {
 		data := dummyData(n)
 		for _, K := range []int{2, 3, 4, 5} {
-			allTests := []int{}
+			var allTests []int
 			for k := 0; k < K; k++ {
 				set := data.GetXValSet(seed, K, k)
 				td, err := set.TrainingData()

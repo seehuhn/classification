@@ -133,7 +133,7 @@ func main() {
 
 	for row := range rows {
 		fmt.Printf("%-*s", sampleNameLength, row.name)
-		errors := []string{}
+		var errors []string
 		for _, c := range row.values {
 			value := <-c
 			if value.Err != nil {

@@ -55,7 +55,7 @@ type Tree struct {
 
 func (t *Tree) doFormat(indent int) []string {
 	pfx := strings.Repeat("    ", indent)
-	res := []string{}
+	var res []string
 	res = append(res, pfx+fmt.Sprintf("# %v", t.Hist))
 	if !t.IsLeaf() {
 		res = append(res, pfx+fmt.Sprintf("if x[%d] <= %g:", t.Column, t.Limit))

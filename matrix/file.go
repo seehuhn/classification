@@ -100,8 +100,8 @@ func (opts *TextFormat) Read(fname string, cols ColumnFunc) (*Float64, *Int, err
 
 	pFloat64 := 0
 	pInt := 0
-	float64Data := []float64{}
-	intData := []int{}
+	var float64Data []float64
+	var intData []int
 	scanner := newTokenizer(fname, in, cols, opts)
 	for scanner.Scan() {
 		float64Row, intRow := scanner.Row()

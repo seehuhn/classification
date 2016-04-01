@@ -38,7 +38,7 @@ func (f *RandomTree) FromDataRandom(d *data.Data, rng *rand.Rand) classification
 	current := []leaf{
 		{root, sample},
 	}
-	next := []leaf{}
+	var next []leaf
 	for todo > 0 && len(current) > 0 {
 		i := rng.Intn(len(current))
 		this := current[i]
@@ -56,7 +56,7 @@ func (f *RandomTree) FromDataRandom(d *data.Data, rng *rand.Rand) classification
 		this.node.RightChild = rightChild
 		this.node.Column = best.Col
 		this.node.Limit = best.Limit
-		todo -= 1
+		todo--
 
 		if best.Left.NRow() > 1 {
 			next = append(next, leaf{leftChild, best.Left})

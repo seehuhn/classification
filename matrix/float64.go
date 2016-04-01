@@ -98,9 +98,9 @@ func (mat *Float64) Column(j int) []float64 {
 // matrix.  `format` is the format string used for each matrix
 // element.
 func (mat *Float64) Format(format string) string {
-	entries := [][]string{}
+	var entries [][]string
 	for i := 0; i < mat.n; i++ {
-		row := []string{}
+		var row []string
 		for j := 0; j < mat.p; j++ {
 			sep := ", "
 			if j == mat.p-1 {
@@ -128,7 +128,7 @@ func (mat *Float64) Format(format string) string {
 		}
 	}
 
-	rows := []string{}
+	var rows []string
 	for i, rowEntries := range entries {
 		head := "  "
 		if i == 0 {
