@@ -29,7 +29,7 @@ type digits struct{}
 // Learning" by Hastie, Tibschirani and Friedman.
 var Digits Set = &digits{}
 
-func (d *digits) Name() string {
+func (d *digits) GetName() string {
 	return "ZIP code digits"
 }
 
@@ -37,7 +37,7 @@ func (d *digits) readFile(fname string) (data *Data, err error) {
 	X, Y, err := matrix.Plain.Read(fname, zipDataColumns)
 	if err != nil {
 		msg := fmt.Sprintf("cannot read %s", fname)
-		return nil, &Error{d.Name(), msg, err}
+		return nil, &Error{d.GetName(), msg, err}
 	}
 	res := &Data{
 		NumClasses: 10,

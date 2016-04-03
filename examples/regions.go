@@ -10,9 +10,9 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/tree"
-	"github.com/seehuhn/classification/util"
 	"github.com/seehuhn/mt19937"
 )
 
@@ -193,11 +193,15 @@ func main() {
 			y[i] = 1
 		}
 	}
-	x := matrix.NewFloat64(n, p, 0, raw)
+	d := &data.Data{
+		NumClasses: 2,
+		X:          matrix.NewFloat64(n, p, 0, raw),
+		Y:          y,
+	}
 
-	tree, estLoss := tree.FromData(2, x, y, nil)
+	tree, estLoss := tree.TreeFromData(d)
 	fmt.Println(estLoss)
-	tree.ForeachLeafRegion(func(a, b []float64, hist util.Histogram, depth int) {
+	tree.ForeachLeafRegion(func(a, b []float64, hist data.Histogram, depth int) {
 		fmt.Println(a[0], b[0], a[1], b[1], hist.Probabilities())
 	})
 }

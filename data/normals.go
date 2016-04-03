@@ -45,7 +45,7 @@ func NewNormals(delta float64, nTrain, nTest int) Set {
 	}
 }
 
-func (ss *twoNormals) Name() string {
+func (ss *twoNormals) GetName() string {
 	return ss.name
 }
 

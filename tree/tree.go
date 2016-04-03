@@ -21,6 +21,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/data"
 )
 
@@ -206,6 +207,10 @@ func (t *Tree) foreachLeafRegionRecursive(a, b []float64, depth int,
 // variable.  The rows of the matrix `x` are the observations from the
 // training data set, and the corresponding classes are given as the
 // entries of `y` (which must be in the range 0, 1, ..., classes-1).
-func FromData(data *data.Data) *Tree {
+func FromData(data *data.Data) classification.Classifier {
 	return DefaultFactory.FromData(data)
+}
+
+func TreeFromData(data *data.Data) (*Tree, float64) {
+	return DefaultFactory.TreeFromData(data)
 }

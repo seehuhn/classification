@@ -26,11 +26,11 @@ import (
 	"os"
 	"runtime/pprof"
 
+	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/tree"
-	"github.com/seehuhn/classification/util"
 	"github.com/seehuhn/mt19937"
 )
 
@@ -63,13 +63,17 @@ func main() {
 			raw[i*p+j] = rng.NormFloat64() + means[response[i]]
 		}
 	}
-	x := matrix.NewFloat64(n, p, 0, raw)
+	d := &data.Data{
+		NumClasses: classes,
+		X:          matrix.NewFloat64(n, p, 0, raw),
+		Y:          response,
+	}
 
 	b := &tree.Factory{
 		XValLoss: loss.Deviance,
 		K:        5,
 
-		StopGrowth: func(hist util.Histogram) bool {
+		StopGrowth: func(hist data.Histogram) bool {
 			seen := 0
 			sum := 0.0
 			for _, ni := range hist {
@@ -87,7 +91,7 @@ func main() {
 		PruneScore: impurity.MisclassificationError,
 	}
 
-	_, estLoss := b.FromData(classes, x, response, nil)
+	_, estLoss := b.TreeFromData(d)
 
 	fmt.Println(n, estLoss)
 }

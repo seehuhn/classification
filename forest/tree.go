@@ -22,7 +22,7 @@ type leaf struct {
 	d    *data.Data
 }
 
-func (f *RandomTree) Name() string {
+func (f *RandomTree) GetName() string {
 	return fmt.Sprintf("random tree %g/%d/%d",
 		f.NumSamples, f.NumLeaves, f.NumColumns)
 }

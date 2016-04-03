@@ -26,10 +26,12 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"github.com/seehuhn/mt19937"
+
+	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/classification/tree"
-	"github.com/seehuhn/mt19937"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -65,40 +67,14 @@ func main() {
 	for i := 0; i < n; i++ {
 		raw[i], response[i] = sample()
 	}
-	x := matrix.NewFloat64(n, 1, 0, raw)
+	d := &data.Data{
+		NumClasses: 2,
+		X:          matrix.NewFloat64(n, 1, 0, raw),
+		Y:          response,
+	}
 
 	builder := &tree.Factory{
 		PruneScore: impurity.Gini,
 	}
-	builder.FromData(2, x, response, nil)
-	// tree, estLoss := builder.TreeFromData(2, x, response)
-
-	// tree.ForeachLeafRegion(1, func(a, b []float64, hist util.Histogram) {
-	//	ai := a[0]
-	//	if ai < 0 {
-	//		ai = 0
-	//	}
-	//	bi := b[0]
-	//	if bi > 1 {
-	//		bi = 1
-	//	}
-	//	q := float64(hist[1]) / float64(hist[0]+hist[1])
-	//	fmt.Println(ai, q)
-	//	fmt.Println(bi, q)
-	//	fmt.Println("")
-	// })
-
-	// N := 1000
-	// var lVal, lSquaredVal float64
-	// for j := 0; j < N; j++ {
-	//	xj, yj := sample()
-	//	pj := tree.Lookup([]float64{xj})
-	//	l := tree.DefaultFactory.XValLoss(yj, pj)
-	//	lVal += l
-	//	lSquaredVal += l * l
-	// }
-	// lVal /= float64(N)
-	// lSquaredVal /= float64(N)
-
-	// fmt.Println(n, estLoss, lVal, math.Sqrt((lSquaredVal-lVal*lVal)/float64(N)))
+	builder.FromData(d)
 }

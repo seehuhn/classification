@@ -20,6 +20,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/impurity"
 	"github.com/seehuhn/classification/loss"
@@ -34,6 +35,10 @@ const xValSeed = 1769149487
 // are interpreted as the corresponding values from the
 // `DefaultFactory` structure.
 type Factory struct {
+	// Name gives a short, human-readable description of the algorithm
+	// described by the Factory.
+	Name string
+
 	// StopGrowth decides for every node of the initial tree whether a
 	// further split is considered.  The default is to stop splitting
 	// nodes once the node only contains a single type of
@@ -66,6 +71,7 @@ type Factory struct {
 // in the book "Classification and Regression Trees" by Breiman et
 // al. (Chapman & Hall CRC, 1984).
 var CART = &Factory{
+	Name:       "CART",
 	StopGrowth: stop.IfPureOrAtMost(5),
 	SplitScore: impurity.Gini,
 	PruneScore: impurity.MisclassificationError,
@@ -80,8 +86,20 @@ var CART = &Factory{
 // `Factory` structure when the `Factory.FromData` method is called.
 var DefaultFactory = CART
 
+func (b *Factory) GetName() string {
+	return b.Name
+}
+
 // FromData constructs a new classification tree from training data.
-func (b *Factory) FromData(data *data.Data) *Tree {
+func (b *Factory) FromData(data *data.Data) classification.Classifier {
+	tree, _ := b.TreeFromData(data)
+	return tree
+}
+
+// TreeFromData constructs a new classification tree from training
+// data.  The returned values are the new tree and an estimate of the
+// expected loss.
+func (b *Factory) TreeFromData(data *data.Data) (*Tree, float64) {
 	b = b.setDefaults()
 
 	p := data.NCol()
@@ -92,7 +110,7 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 	// step 1: generate the full tree
 	tree := b.fullTree(data)
 	if tree.IsLeaf() {
-		return tree
+		return tree, 0.0
 	}
 
 	// step 2: generate candidates for a pruned tree
@@ -140,7 +158,7 @@ func (b *Factory) FromData(data *data.Data) *Tree {
 			bestLoss = loss[j]
 		}
 	}
-	return candidates[bestIdx]
+	return candidates[bestIdx], bestLoss / float64(data.NRow())
 }
 
 func (b *Factory) setDefaults() *Factory {

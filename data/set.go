@@ -4,7 +4,7 @@ package data
 // consisting of training data for setting up the method and test data
 // for assessment.
 type Set interface {
-	Name() string
+	GetName() string
 	TrainingData() (data *Data, err error)
 	TestData() (data *Data, err error)
 }

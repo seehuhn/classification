@@ -18,19 +18,6 @@ import (
 	"github.com/seehuhn/classification/tree"
 )
 
-type TreeFactory struct {
-	name    string
-	builder *tree.Factory
-}
-
-func (tf *TreeFactory) Name() string {
-	return tf.name
-}
-
-func (tf *TreeFactory) FromData(data *data.Data) classification.Classifier {
-	return tf.builder.FromData(data)
-}
-
 func formatVal(x, se float64, width, maxPrec int) string {
 	prec := int(math.Ceil(-math.Log10(1.96 * se)))
 	if prec > maxPrec {
@@ -49,15 +36,15 @@ type row struct {
 }
 
 func main() {
-	tree1 := &TreeFactory{"CART", tree.CART}
-	tree2builder := &tree.Factory{
+	tree1 := tree.CART
+	tree2 := &tree.Factory{
+		Name:       "other CART",
 		StopGrowth: stop.IfPure,
 		SplitScore: impurity.Gini,
 		PruneScore: impurity.Gini,
 		XValLoss:   loss.Deviance,
 		K:          10,
 	}
-	tree2 := &TreeFactory{"other CART", tree2builder}
 	forest1 := &forest.RandomForestFactory{
 		RandomTree: forest.RandomTree{
 			NumSamples: 0.7,
@@ -96,7 +83,7 @@ func main() {
 	go func() {
 		for _, sample := range testCases {
 			r := row{
-				name:   sample.Name(),
+				name:   sample.GetName(),
 				values: make([]<-chan *classification.Result, len(methods)),
 			}
 			for i, method := range methods {
@@ -113,7 +100,7 @@ func main() {
 
 	fmt.Println()
 	for i, method := range methods {
-		fmt.Println(string([]byte{'A' + byte(i)}), "=", method.Name())
+		fmt.Println(string([]byte{'A' + byte(i)}), "=", method.GetName())
 	}
 	fmt.Println()
 	fmt.Print(strings.Repeat(" ", sampleNameLength))

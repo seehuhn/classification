@@ -12,7 +12,7 @@ type xvalSet struct {
 	testSet     []int
 }
 
-func (xv *xvalSet) Name() string {
+func (xv *xvalSet) GetName() string {
 	return fmt.Sprintf("XvalSet %d/%d", xv.k, xv.K)
 }
 

@@ -12,7 +12,7 @@ import (
 const baggingSeed = 1070630982
 
 type RandomFactory interface {
-	Name() string
+	GetName() string
 	FromDataRandom(d *data.Data, rng *rand.Rand) classification.Classifier
 }
 
@@ -21,8 +21,8 @@ type randomize struct {
 	voterSize int
 }
 
-func (f randomize) Name() string {
-	return "random " + f.base.Name()
+func (f randomize) GetName() string {
+	return "random " + f.base.GetName()
 }
 
 func (f randomize) FromDataRandom(d *data.Data, rng *rand.Rand) classification.Classifier {
@@ -58,8 +58,8 @@ type baggingFactory struct {
 	NumVoters int
 }
 
-func (f *baggingFactory) Name() string {
-	return fmt.Sprintf("%s, %d-bagged", f.Base.Name(), f.NumVoters)
+func (f *baggingFactory) GetName() string {
+	return fmt.Sprintf("%s, %d-bagged", f.Base.GetName(), f.NumVoters)
 }
 
 func (f *baggingFactory) FromData(data *data.Data) classification.Classifier {

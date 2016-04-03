@@ -16,7 +16,7 @@ type Classifier interface {
 // Factory objects encapsulate the logic to construct classifiers from
 // training data sets.
 type Factory interface {
-	Name() string
+	GetName() string
 	FromData(*data.Data) Classifier
 }
 
