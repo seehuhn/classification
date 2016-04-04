@@ -2,6 +2,7 @@ package classification
 
 import (
 	"math"
+	"time"
 
 	"github.com/seehuhn/classification/data"
 	"github.com/seehuhn/classification/loss"
@@ -26,6 +27,9 @@ type Result struct {
 	MeanLoss float64
 	StdErr   float64
 	Err      error
+
+	TrainingTime time.Duration
+	TestTime     time.Duration
 }
 
 // Assess estimates the quality of a classifier by computing the
@@ -34,19 +38,26 @@ type Result struct {
 // classifier from training data, and `L` specifies the loss function
 // to assess the cost of wrong classifications.
 func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
+	res := &Result{}
+
 	trainingData, err := samples.TrainingData()
 	if err != nil {
-		return &Result{0, 0, err}
+		res.Err = err
+		return res
 	}
+	start := time.Now()
 	c := cf.FromData(trainingData)
+	res.TrainingTime = time.Since(start)
 
 	testData, err := samples.TestData()
 	if err != nil {
-		return &Result{0, 0, err}
+		res.Err = err
+		return res
 	}
 	cumLoss := 0.0
 	cumLoss2 := 0.0
 	rows := testData.GetRows()
+	start = time.Now()
 	for _, i := range rows {
 		sample := testData.X.Row(i)
 		prob := c.EstimateClassProbabilities(sample)
@@ -54,10 +65,13 @@ func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
 		cumLoss += l
 		cumLoss2 += l * l
 	}
+	res.TestTime = time.Since(start)
 	nn := float64(len(rows))
 	cumLoss /= nn
 	cumLoss2 /= nn
 	stdErr := math.Sqrt((cumLoss2 - cumLoss*cumLoss) / (nn - 1))
 
-	return &Result{cumLoss, stdErr, nil}
+	res.MeanLoss = cumLoss
+	res.StdErr = stdErr
+	return res
 }

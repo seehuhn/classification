@@ -7,6 +7,7 @@ import (
 	"math"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/seehuhn/classification"
 	"github.com/seehuhn/classification/bagging"
@@ -118,10 +119,13 @@ func main() {
 	}
 	fmt.Println()
 
+	methodTrainingTime := make([]time.Duration, len(methods))
+	methodTestTime := make([]time.Duration, len(methods))
 	for row := range rows {
+		var rowTrainingTime, rowTestTime time.Duration
 		fmt.Printf("%-*s", sampleNameLength, row.name)
 		var errors []string
-		for _, c := range row.values {
+		for i, c := range row.values {
 			value := <-c
 			if value.Err != nil {
 				fmt.Print("| ERROR" + strings.Repeat(" ", colWidth-7))
@@ -130,11 +134,19 @@ func main() {
 				fmt.Print("| " + formatVal(value.MeanLoss, value.StdErr,
 					colWidth-2, maxPrec))
 			}
+			rowTrainingTime += value.TrainingTime
+			methodTrainingTime[i] += value.TrainingTime
+			rowTestTime += value.TestTime
+			methodTestTime[i] += value.TestTime
 		}
-		fmt.Println()
+		fmt.Println(" ", rowTrainingTime, rowTestTime)
 		for _, msg := range errors {
 			fmt.Println("  " + msg)
 		}
+	}
+	fmt.Println()
+	for i := range methods {
+		fmt.Println(string([]byte{'A' + byte(i)}), "=", methodTrainingTime[i], methodTestTime[i])
 	}
 	fmt.Println()
 }
