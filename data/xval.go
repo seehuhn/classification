@@ -60,7 +60,7 @@ func (data *Data) GetXValSet(seed int64, K, k int) Set {
 	for i, row := range rows {
 		// Potential optimisations: for i = j, the assignment
 		// shuffled[i] = shuffled[j] is unnecessary.  For i = 0 we
-		// don't even need to all Intn().
+		// don't even need to call Intn().
 		j := rng.Intn(i + 1)
 		shuffled[i], shuffled[j] = shuffled[j], row
 	}
