@@ -49,6 +49,10 @@ func (ss *twoNormals) GetName() string {
 	return ss.name
 }
 
+func (ss *twoNormals) String() string {
+	return "<data set " + ss.name + ">"
+}
+
 func (ss *twoNormals) TrainingData() (data *Data, err error) {
 	return &Data{
 		NumClasses: 2,

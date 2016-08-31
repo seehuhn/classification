@@ -31,7 +31,7 @@ const maxColumns = 10000
 
 // Tree is the data type to represent nodes of a classification tree.
 type Tree struct {
-	// Hist gives the frequencies of the different reponses in the
+	// Hist gives the frequencies of the different responses in the
 	// training set, for this sub-tree.
 	Hist data.Histogram
 
@@ -48,9 +48,9 @@ type Tree struct {
 	Column int
 
 	// Limit specifies the critical value for the input variable given
-	// by `Column`.  If the observed value is less than or equal to
-	// `Limit`, the value corresponds to the left subtree, otherwise
-	// the value corresponds to the right subtree.
+	// by `Column`.  If an observed value is less than or equal to
+	// `Limit`, the value corresponds to the left subtree, and
+	// otherwise to the right subtree.
 	Limit float64
 }
 
