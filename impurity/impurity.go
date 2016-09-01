@@ -41,9 +41,8 @@ func Gini(hist data.Histogram) float64 {
 	var res float64
 	n := hist.Sum()
 	for _, ni := range hist {
-		floatNi := ni
-		pi := floatNi / n
-		res += floatNi * (1 - pi)
+		pi := ni / n
+		res += ni * (1 - pi)
 	}
 	return res
 }
@@ -54,12 +53,11 @@ func Entropy(hist data.Histogram) float64 {
 	var res float64
 	total := hist.Sum()
 	for _, ni := range hist {
-		floatNi := ni
-		pi := floatNi / total
+		pi := ni / total
 		if pi <= 1e-6 {
 			continue
 		}
-		res -= floatNi * math.Log(pi)
+		res -= ni * math.Log(pi)
 	}
 	return res
 }
