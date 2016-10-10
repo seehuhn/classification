@@ -11,3 +11,6 @@ TODO
   * https://github.com/ryanbressler/CloudForest
   * R packages
   * scikit learn
+- For assessment of methods, treat fixed-size data sets and generated
+  data sets differently, use cross-validation where needed.
+- Add the Fisher's Iris data set, because it is so popular.
