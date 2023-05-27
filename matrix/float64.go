@@ -147,20 +147,30 @@ func (mat *Float64) String() string {
 
 // WriteCSV writes the matrix in .csv form into the file with name
 // `fname`.  Any pre-existing file with this name is over-written.
-func (mat *Float64) WriteCSV(fname string) {
+func (mat *Float64) WriteCSV(fname string) error {
 	fd, err := os.Create(fname)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer fd.Close()
 
 	for i := 0; i < mat.n; i++ {
 		for j := 0; j < mat.p; j++ {
 			if j > 0 {
-				fd.WriteString(",")
+				_, err := fd.WriteString(",")
+				if err != nil {
+					return err
+				}
 			}
-			fmt.Fprintf(fd, "%g", mat.At(i, j))
+			_, err := fmt.Fprintf(fd, "%g", mat.At(i, j))
+			if err != nil {
+				return err
+			}
 		}
-		fd.WriteString("\n")
+		_, err := fd.WriteString("\n")
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }

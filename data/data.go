@@ -18,7 +18,7 @@
 package data
 
 import (
-	"github.com/seehuhn/classification/matrix"
+	"seehuhn.de/go/classification/matrix"
 )
 
 // Data represents a collection of samples with associated classes,

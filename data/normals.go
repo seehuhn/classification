@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/seehuhn/classification/matrix"
 	"github.com/seehuhn/mt19937"
+	"seehuhn.de/go/classification/matrix"
 )
 
 type twoNormals struct {

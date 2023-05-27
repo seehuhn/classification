@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -10,10 +11,10 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/tree"
+	"seehuhn.de/go/classification/data"
+	"seehuhn.de/go/classification/impurity"
+	"seehuhn.de/go/classification/loss"
+	"seehuhn.de/go/classification/tree"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

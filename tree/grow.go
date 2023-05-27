@@ -20,12 +20,12 @@ import (
 	"math"
 	"sort"
 
-	"github.com/seehuhn/classification"
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/matrix"
-	"github.com/seehuhn/classification/stop"
+	"seehuhn.de/go/classification"
+	"seehuhn.de/go/classification/data"
+	"seehuhn.de/go/classification/impurity"
+	"seehuhn.de/go/classification/loss"
+	"seehuhn.de/go/classification/matrix"
+	"seehuhn.de/go/classification/stop"
 )
 
 const xValSeed = 1769149487

@@ -3,7 +3,7 @@ package tree
 import (
 	"math"
 
-	"github.com/seehuhn/classification/impurity"
+	"seehuhn.de/go/classification/impurity"
 )
 
 const epsilon = 1e-6

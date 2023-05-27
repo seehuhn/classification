@@ -25,7 +25,8 @@ func (*Tests) TestBinaryFormat(c *C) {
 	}
 
 	w := &bytes.Buffer{}
-	tree1.WriteBinary(w)
+	err := tree1.WriteBinary(w)
+	c.Assert(err, Equals, nil)
 	r := bytes.NewReader(w.Bytes())
 	tree2, err := FromFile(r)
 	c.Assert(err, Equals, nil)

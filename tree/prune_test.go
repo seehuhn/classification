@@ -3,8 +3,8 @@ package tree
 import (
 	"math"
 
-	"github.com/seehuhn/classification/impurity"
 	. "gopkg.in/check.v1"
+	"seehuhn.de/go/classification/impurity"
 )
 
 func (*Tests) TestInitialPrune(c *C) {

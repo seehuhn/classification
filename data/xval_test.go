@@ -3,8 +3,8 @@ package data
 import (
 	"sort"
 
-	"github.com/seehuhn/classification/matrix"
 	. "gopkg.in/check.v1"
+	"seehuhn.de/go/classification/matrix"
 )
 
 func dummyData(n int) *Data {

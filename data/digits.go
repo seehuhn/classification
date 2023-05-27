@@ -1,15 +1,19 @@
 package data
 
 import (
+	"embed"
 	"fmt"
 
-	"github.com/seehuhn/classification/matrix"
+	"seehuhn.de/go/classification/matrix"
 )
 
 const (
 	trainFile = "data/zip.train.gz"
 	testFile  = "data/zip.test.gz"
 )
+
+//go:embed data/*
+var dataDir embed.FS
 
 func zipDataColumns(col int) matrix.ColumnType {
 	switch col {
@@ -34,7 +38,7 @@ func (d *digits) GetName() string {
 }
 
 func (d *digits) readFile(fname string) (data *Data, err error) {
-	X, Y, err := matrix.Plain.Read(fname, zipDataColumns)
+	X, Y, err := matrix.Plain.Read(fname, dataDir, zipDataColumns)
 	if err != nil {
 		msg := fmt.Sprintf("cannot read %s", fname)
 		return nil, &Error{d.GetName(), msg, err}

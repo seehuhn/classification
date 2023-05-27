@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"runtime"
 
-	"github.com/seehuhn/classification"
-	"github.com/seehuhn/classification/data"
+	"seehuhn.de/go/classification"
+	"seehuhn.de/go/classification/data"
 )
 
 const baggingSeed = 1070630982

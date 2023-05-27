@@ -4,8 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/loss"
+	"seehuhn.de/go/classification/data"
+	"seehuhn.de/go/classification/loss"
 )
 
 // Classifier represents an algorithm for classification, together

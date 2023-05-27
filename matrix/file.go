@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"compress/gzip"
 	"io"
+	"io/fs"
 	"math"
 	"os"
 	"strconv"
@@ -79,8 +80,15 @@ var Plain = &TextFormat{
 	NAString: "NA",
 }
 
-func (opts *TextFormat) Read(fname string, cols ColumnFunc) (*Float64, *Int, error) {
-	file, err := os.Open(fname)
+func (opts *TextFormat) Read(fname string, store fs.FS, cols ColumnFunc) (*Float64, *Int, error) {
+	var err error
+	var file fs.File
+
+	if store == nil {
+		file, err = os.Open(fname)
+	} else {
+		file, err = store.Open(fname)
+	}
 	if err != nil {
 		return nil, nil, err
 	}

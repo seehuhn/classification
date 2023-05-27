@@ -1,5 +1,3 @@
-// +build ignore
-
 package main
 
 import (
@@ -9,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/seehuhn/classification"
-	"github.com/seehuhn/classification/bagging"
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/forest"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/stop"
-	"github.com/seehuhn/classification/tree"
+	"seehuhn.de/go/classification"
+	"seehuhn.de/go/classification/bagging"
+	"seehuhn.de/go/classification/data"
+	"seehuhn.de/go/classification/forest"
+	"seehuhn.de/go/classification/impurity"
+	"seehuhn.de/go/classification/loss"
+	"seehuhn.de/go/classification/stop"
+	"seehuhn.de/go/classification/tree"
 )
 
 func formatVal(x, se float64, width, maxPrec int) string {
@@ -112,12 +110,12 @@ func main() {
 			string([]byte{'A' + byte(i)}) +
 			strings.Repeat(" ", colWidth-k-3))
 	}
-	fmt.Println()
+	fmt.Println(" training[s] test[s]")
 	fmt.Print(strings.Repeat("-", sampleNameLength))
 	for range methods {
 		fmt.Print("+" + strings.Repeat("-", colWidth-1))
 	}
-	fmt.Println()
+	fmt.Println(" --------------------")
 
 	methodTrainingTime := make([]time.Duration, len(methods))
 	methodTestTime := make([]time.Duration, len(methods))
@@ -139,14 +137,16 @@ func main() {
 			rowTestTime += value.TestTime
 			methodTestTime[i] += value.TestTime
 		}
-		fmt.Println(" ", rowTrainingTime, rowTestTime)
+		fmt.Printf("      %6.1f  %6.1f\n",
+			rowTrainingTime.Seconds(), rowTestTime.Seconds())
 		for _, msg := range errors {
 			fmt.Println("  " + msg)
 		}
 	}
 	fmt.Println()
 	for i := range methods {
-		fmt.Println(string([]byte{'A' + byte(i)}), "=", methodTrainingTime[i], methodTestTime[i])
+		fmt.Printf("%s = %6.1f  %6.1f\n", string([]byte{'A' + byte(i)}),
+			methodTrainingTime[i].Seconds(), methodTestTime[i].Seconds())
 	}
 	fmt.Println()
 }

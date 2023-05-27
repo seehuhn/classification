@@ -1,10 +1,10 @@
 package tree
 
 import (
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/matrix"
 	. "gopkg.in/check.v1"
+	"seehuhn.de/go/classification/data"
+	"seehuhn.de/go/classification/impurity"
+	"seehuhn.de/go/classification/matrix"
 )
 
 func (*Tests) TestFindBestSplit1(c *C) {

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/seehuhn/classification"
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/tree"
+	"seehuhn.de/go/classification"
+	"seehuhn.de/go/classification/data"
+	"seehuhn.de/go/classification/impurity"
+	"seehuhn.de/go/classification/tree"
 )
 
 type RandomTree struct {

@@ -1,7 +1,7 @@
 package stop
 
 import (
-	"github.com/seehuhn/classification/data"
+	"seehuhn.de/go/classification/data"
 )
 
 // A Function is used to decide when to stop splitting branches of a

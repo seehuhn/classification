@@ -7,7 +7,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/seehuhn/classification/data"
+	"seehuhn.de/go/classification/data"
 )
 
 // ErrTreeEncoding is returned by `Tree.UnmarshalBinary` if the input

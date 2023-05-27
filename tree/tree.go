@@ -21,8 +21,8 @@ import (
 	"math"
 	"strings"
 
-	"github.com/seehuhn/classification"
-	"github.com/seehuhn/classification/data"
+	"seehuhn.de/go/classification"
+	"seehuhn.de/go/classification/data"
 )
 
 // To prevent excessive memory use, the number of columns is limited
@@ -133,14 +133,6 @@ func (t *Tree) EstimateClassProbabilities(x []float64) data.Histogram {
 // GuessClass tries to guess the class corresponding to input `x`.
 func (t *Tree) GuessClass(x []float64) int {
 	return t.lookup(x).Hist.ArgMax()
-}
-
-func (t *Tree) walkPostOrder(fn func(*Tree, int), depth int) {
-	if t.LeftChild != nil {
-		t.LeftChild.walkPostOrder(fn, depth+1)
-		t.RightChild.walkPostOrder(fn, depth+1)
-	}
-	fn(t, depth)
 }
 
 // ForeachLeaf calls the function `fn` once for each terminal node of

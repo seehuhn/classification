@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+//go:build ignore
 // +build ignore
 
 package main
@@ -26,12 +27,12 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/seehuhn/classification/data"
-	"github.com/seehuhn/classification/impurity"
-	"github.com/seehuhn/classification/loss"
-	"github.com/seehuhn/classification/matrix"
-	"github.com/seehuhn/classification/tree"
 	"github.com/seehuhn/mt19937"
+	"seehuhn.de/go/classification/data"
+	"seehuhn.de/go/classification/impurity"
+	"seehuhn.de/go/classification/loss"
+	"seehuhn.de/go/classification/matrix"
+	"seehuhn.de/go/classification/tree"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

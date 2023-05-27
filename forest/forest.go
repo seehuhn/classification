@@ -1,8 +1,8 @@
 package forest
 
 import (
-	"github.com/seehuhn/classification"
-	"github.com/seehuhn/classification/bagging"
+	"seehuhn.de/go/classification"
+	"seehuhn.de/go/classification/bagging"
 )
 
 type RandomForestFactory struct {

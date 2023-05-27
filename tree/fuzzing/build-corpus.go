@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/seehuhn/classification/tree"
+	"seehuhn.de/go/classification/tree"
 )
 
 var fileIndex int

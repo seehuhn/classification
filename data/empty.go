@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/seehuhn/classification/matrix"
+	"seehuhn.de/go/classification/matrix"
 )
 
 // NewEmpty returns a newly allocated data set of the given size,

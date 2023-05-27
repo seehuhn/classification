@@ -1,7 +1,7 @@
 Classification Trees in Go
 ==========================
 
-The Go Package ``github.com/seehuhn/classification/tree`` implements
+The Go Package ``seehuhn.de/go/classification/tree`` implements
 classification trees as described in [HaTiFrie09]_
 
 Copyright (C) 2014, 2015  Jochen Voss
@@ -27,7 +27,7 @@ Installation
 
 This package can be installed using the ``go get`` command::
 
-    go get github.com/seehuhn/classification/tree
+    go get seehuhn.de/go/classification/tree
 
 Usage
 -----
@@ -35,9 +35,9 @@ Usage
 The current interface can be seen via the package's onlinehelp, either
 on godoc.org_ or on the command line::
 
-    godoc github.com/seehuhn/classification/tree
+    godoc seehuhn.de/go/classification/tree
 
-.. _godoc.org: http://godoc.org/github.com/seehuhn/classification/tree
+.. _godoc.org: http://godoc.org/seehuhn.de/go/classification/tree
 
 Online Resources
 ----------------
