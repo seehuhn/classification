@@ -25,7 +25,7 @@ import (
 	"seehuhn.de/go/classification/impurity"
 	"seehuhn.de/go/classification/loss"
 	"seehuhn.de/go/classification/matrix"
-	"seehuhn.de/go/classification/stop"
+	"seehuhn.de/go/classification/tree/stop"
 )
 
 const xValSeed = 1769149487
@@ -33,7 +33,7 @@ const xValSeed = 1769149487
 // Factory is a structure to store the parameters governing the
 // growing and pruning of classification trees.  Any zero field values
 // are interpreted as the corresponding values from the
-// `DefaultFactory` structure.
+// [DefaultFactory] structure.
 type Factory struct {
 	// Name gives a short, human-readable description of the algorithm
 	// described by the Factory.
@@ -120,6 +120,7 @@ func (b *Factory) TreeFromData(data *data.Data) (*Tree, float64) {
 		xValSet := data.GetXValSet(xValSeed, b.K, k)
 
 		// Build the initial tree using the training data.
+		// TODO(voss): error handling?
 		trainingData, _ := xValSet.TrainingData()
 		tree := b.fullTree(trainingData)
 
@@ -194,6 +195,11 @@ func (b *Factory) getFullTree(data *data.Data, hist data.Histogram) *Tree {
 	}
 
 	best := b.findBestSplit(data, hist)
+	if best == nil {
+		return &Tree{
+			Hist: hist,
+		}
+	}
 
 	return &Tree{
 		Hist:       hist,
@@ -204,6 +210,8 @@ func (b *Factory) getFullTree(data *data.Data, hist data.Histogram) *Tree {
 	}
 }
 
+// findBestSplit finds the best split point for the given data.
+// If all columns are constant, no split is possible and nil is returned.
 func (b *Factory) findBestSplit(d *data.Data, hist data.Histogram) *searchResult {
 	best := &searchResult{
 		Left: &data.Data{
@@ -254,6 +262,10 @@ func (b *Factory) findBestSplit(d *data.Data, hist data.Histogram) *searchResult
 				first = false
 			}
 		}
+	}
+	if first {
+		// all columns are constant
+		return nil
 	}
 	return best
 }

@@ -11,17 +11,17 @@ import (
 type Function func(data.Histogram) bool
 
 // TODO(voss): use different naming conventions for stop functions and
-// stop function factories.
+// stop function factories?
 
-// IfAtMost returns a stop.Function which stops splitting nodes once
-// the current node has `n` or fewer samples associated to it.
+// IfAtMost returns a stop function which stops splitting nodes once
+// the current node has n or fewer samples associated to it.
 func IfAtMost(n float64) Function {
 	return func(hist data.Histogram) bool {
 		return hist.Sum() <= n
 	}
 }
 
-// IfPure is a stop.Function which stops splitting nodes once
+// IfPure is a [Function] which stops splitting nodes once
 // all samples in the current node have the same class.
 func IfPure(hist data.Histogram) bool {
 	k := 0
@@ -36,7 +36,7 @@ func IfPure(hist data.Histogram) bool {
 	return true
 }
 
-// IfPureOrAtMost returns a stop.Function which stops splitting nodes
+// IfPureOrAtMost returns a stop function which stops splitting nodes
 // when either all samples in the current node have the same class, or
 // the node has `n` or fewer samples associated to it.
 func IfPureOrAtMost(n float64) Function {

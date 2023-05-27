@@ -75,3 +75,54 @@ func Assess(cf Factory, samples data.Set, L loss.Function) *Result {
 	res.StdErr = stdErr
 	return res
 }
+
+func AssessXVal(cf Factory, samples *data.Data, L loss.Function, K int) *Result {
+	res := &Result{}
+
+	var testTime time.Duration
+	var trainingTime time.Duration
+	cumLoss := 0.0
+	cumLoss2 := 0.0
+	for k := 0; k < K; k++ {
+		split := samples.GetXValSet(xValSeed, K, k)
+
+		trainingData, err := split.TrainingData()
+		if err != nil {
+			res.Err = err
+			return res
+		}
+		start := time.Now()
+		c := cf.FromData(trainingData)
+		trainingTime += time.Since(start)
+
+		testData, err := split.TestData()
+		if err != nil {
+			res.Err = err
+			return res
+		}
+		rows := testData.GetRows()
+		start = time.Now()
+		for _, i := range rows {
+			sample := testData.X.Row(i)
+			prob := c.EstimateClassProbabilities(sample)
+			l := L(testData.Y[i], prob)
+			cumLoss += l
+			cumLoss2 += l * l
+		}
+		testTime += time.Since(start)
+	}
+
+	nn := float64(samples.NRow())
+	cumLoss /= nn
+	cumLoss2 /= nn
+	stdErr := math.Sqrt((cumLoss2 - cumLoss*cumLoss) / (nn - 1))
+
+	res.MeanLoss = cumLoss
+	res.StdErr = stdErr
+	res.TrainingTime = trainingTime
+	res.TestTime = testTime
+
+	return res
+}
+
+const xValSeed = 20230527

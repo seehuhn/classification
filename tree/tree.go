@@ -106,16 +106,14 @@ func (t *Tree) IsLeaf() bool {
 
 // lookup returns the terminal node corresponding to input `x`.
 func (t *Tree) lookup(x []float64) *Tree {
-	for {
-		if t.IsLeaf() {
-			return t
-		}
+	for !t.IsLeaf() {
 		if x[t.Column] <= t.Limit {
 			t = t.LeftChild
 		} else {
 			t = t.RightChild
 		}
 	}
+	return t
 }
 
 // GetClassCounts returns the class counts for input `x`, as seen in

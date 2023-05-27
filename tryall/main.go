@@ -13,8 +13,8 @@ import (
 	"seehuhn.de/go/classification/forest"
 	"seehuhn.de/go/classification/impurity"
 	"seehuhn.de/go/classification/loss"
-	"seehuhn.de/go/classification/stop"
 	"seehuhn.de/go/classification/tree"
+	"seehuhn.de/go/classification/tree/stop"
 )
 
 func formatVal(x, se float64, width, maxPrec int) string {
