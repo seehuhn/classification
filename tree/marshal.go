@@ -205,7 +205,7 @@ func readBinaryTree(buf *bufio.Reader, p int) (*Tree, error) {
 		if err != nil {
 			return nil, err
 		}
-		if tmp >= uint64(p) {
+		if tmp > maxColumns {
 			return nil, ErrTreeEncoding
 		}
 		t.Column = int(tmp)

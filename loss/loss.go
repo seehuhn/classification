@@ -62,3 +62,8 @@ func ZeroOne(y int, prob []float64) float64 {
 
 	return 1.0 - float64(hit)/float64(count)
 }
+
+// TODO(voss): pick a better name for this
+func Probability(y int, prob []float64) float64 {
+	return 1 - prob[y]
+}
